@@ -58,6 +58,22 @@ async def match_ws(websocket: WebSocket, session_id: str):
     if session_id not in sessions:
         await websocket.close()
         return
+    # Enforce max 2 players per session
+    if len(sessions[session_id]) >= 2:
+        # Notify all clients in session and the new one to return to matchmaking
+        for ws in sessions[session_id]:
+            try:
+                await ws.send_json({"event": "session_closed", "reason": "Too many players joined. Returning to matchmaking."})
+                await ws.close()
+            except Exception:
+                pass
+        try:
+            await websocket.send_json({"event": "session_closed", "reason": "Too many players joined. Returning to matchmaking."})
+            await websocket.close()
+        except Exception:
+            pass
+        del sessions[session_id]
+        return
     sessions[session_id].append(websocket)
     try:
         while True:
