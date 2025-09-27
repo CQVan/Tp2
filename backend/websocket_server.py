@@ -10,7 +10,11 @@ import hashlib
 from playerdb import get_player, create_player, update_player, Player
 import httpx
 from fastapi.middleware.cors import CORSMiddleware
-
+import os
+import json
+import jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
+from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -21,10 +25,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# --- Password hashing helpers ---
+
+# --- Authentication helpers ---
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
-# --- WebSockets Endpoints (Corrected) ---
+
+def decode_token(token: str):
+    try:
+        payload = jwt.decode(token, config.get_config("jwt_secret"), algorithms=[config.get_config("jwt_algorithm")])
+        return {"valid": True, "data": payload}
+    except ExpiredSignatureError:
+        return {"valid": False, "error": "Token has expired."}
+    except InvalidTokenError:
+        return {"valid": False, "error": "Invalid token."}
 
 # --- REST Endpoints ---
 
@@ -33,29 +46,61 @@ async def login(request: Request):
     data = await request.json()
     userid = data.get("userid")
     password = data.get("password")
-    if not userid or not password:
-        return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
-    player = get_player(userid)
-    if not player or not hasattr(player, "password_hash"):
-        return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
-    if player.password_hash != hash_password(password):
-        return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
-    return {"success": True, "userid": userid, "elo": player.elo}
 
+    if not userid or not password:
+        return JSONResponse(
+            {"success": False, "error": "Missing userid or password."},
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    player = get_player(userid)
+    
+    if not player or not hasattr(player, "password_hash"):
+        return JSONResponse(
+            {"success": False, "error": "Invalid credentials."},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+
+    if player.password_hash != hash_password(password):
+        return JSONResponse(
+            {"success": False, "error": "Invalid credentials."},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # Create JWT
+    expire = datetime.utcnow() + timedelta(minutes=config.get_config("jwt_expire_time"))
+    payload = {
+        "sub": userid,
+        "exp": expire
+    }
+    token = jwt.encode(payload, config.get_config("jwt_secret"), algorithm=config.get_config("jwt_algorithm"))
+
+    return {"success": True, "token": token}
 
 @app.post("/auth/register")
 async def register(request: Request):
     data = await request.json()
     userid = data.get("userid")
     password = data.get("password")
+
     if not userid or not password:
         return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
+
     if get_player(userid):
         return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
+
     player = Player(id=userid, elo=1000, password_hash=hash_password(password))
     create_player(player)
-    return {"success": True, "userid": userid, "elo": 1000}
 
+    # Create JWT token
+    expire = datetime.utcnow() + timedelta(minutes=config.get_config("jwt_expire_time"))
+    payload = {
+        "sub": userid,
+        "exp": expire
+    }
+    token = jwt.encode(payload, config.get_config("jwt_secret"), algorithm=config.get_config("jwt_algorithm"))
+
+    return {"success": True, "token": token}
 
 @app.post("/update-elo")
 async def update_elo(request: Request):
@@ -75,6 +120,19 @@ async def update_elo(request: Request):
         player.elo -= 20
     update_player(player)
     return {"success": True, "userid": userid, "elo": player.elo}
+
+class ConfigManager:
+    def __init__(self, file_path="config.json"):
+        # Load the JSON file into a dictionary when the class is initialized
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                self._config = json.load(f)
+        else:
+            self._config = {}
+
+    def get_config(self, item: str):
+        # Return the value for the key, or None if it doesn’t exist
+        return self._config.get(item)
 
 # --- Connection Manager for Broadcasting ---
 class ConnectionManager:
@@ -126,17 +184,17 @@ class ConnectionManager:
 
 # --- Matchmaking Logic (with disconnect handling) ---
 class DynamicMatchmaker:
-    def __init__(self, bracket_size=200):
+    def __init__(self):
         self.queues = {}
-        self.bracket_size = bracket_size
+        self.bracket_size = config.get_config("bracket_size")
         # The key fix: Map websockets to their removal info
         self.ws_map = {}
 
     def _get_bracket_key(self, elo):
         return math.floor((elo - 1) / self.bracket_size) if elo > 0 else 0
 
-    def add_player(self, player, ws: WebSocket):
-        elo = player.get('elo', 0)
+    def add_player(self, player: Player, ws: WebSocket):
+        elo = player.elo
         bracket_key = self._get_bracket_key(elo)
         
         if bracket_key not in self.queues:
@@ -173,15 +231,12 @@ class DynamicMatchmaker:
                 pass
             del self.ws_map[ws]
 
-
-
 # --- Globals ---
+config = ConfigManager()
 matchmaker = DynamicMatchmaker()
 manager = ConnectionManager()
 # Track active session IDs
 active_sessions = set()
-
-
 
 # --- WebSockets Endpoints (Corrected) ---
 
@@ -190,8 +245,11 @@ async def matchmaking_ws(websocket: WebSocket):
     await websocket.accept()
     try:
         data = await websocket.receive_json()
-        player = {"user_id": data.get("user_id", str(uuid.uuid4())), "elo": data.get("elo", 100)}
-        
+        token = data.get("token")
+
+        payload = decode_token(token=token)
+        player = get_player(payload.get("sub"))
+
         match = matchmaker.add_player(player, websocket)
         
         if match:
@@ -213,7 +271,6 @@ async def matchmaking_ws(websocket: WebSocket):
     except WebSocketDisconnect:
         # Solution: Handle disconnects from the queue
         matchmaker.remove_player(websocket)
-
 
 @app.websocket("/match/{session_id}")
 async def match_ws(websocket: WebSocket, session_id: str):
