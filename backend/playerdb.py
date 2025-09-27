@@ -6,6 +6,7 @@ from dataclasses import dataclass
 class Player:
     id: str
     elo: int
+    password_hash: str
 
 from dotenv import load_dotenv
 import os
@@ -38,7 +39,8 @@ def create_player(player: Player):
     table.put_item(
         Item={
             'id': player.id,
-            'elo': player.elo
+            'elo': player.elo,
+            'password_hash': player.password_hash
         }
     )
 
