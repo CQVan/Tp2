@@ -32,7 +32,8 @@ def get_player(player_id: str) -> Player | None:
 
     return Player(
         id=item['id'],
-        elo=item['elo']
+        elo=item['elo'],
+        password_hash=item['password_hash']
     )
 
 def create_player(player: Player):
