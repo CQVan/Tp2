@@ -1,18 +1,32 @@
+from dataclasses import dataclass
+import os
 from typing import Any, List
 import boto3
 import random
 
+from dotenv import load_dotenv
+
+@dataclass
 class TestCase:
     input: Any
     output: Any
 
+@dataclass
 class Question:
     title: str
     prompt : str
     difficulty: int
     test_cases: List[TestCase]
 
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+load_dotenv()
+
+dynamodb = boto3.resource(
+    'dynamodb',
+    region_name=os.getenv("AWS_DEFAULT_REGION"),
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
+)
+
 table = dynamodb.Table('Questions')
 
 def get_question() -> Question | None:

@@ -7,7 +7,19 @@ class Player:
     id: str
     elo: int
 
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+from dotenv import load_dotenv
+import os
+import boto3
+
+load_dotenv()
+
+dynamodb = boto3.resource(
+    'dynamodb',
+    region_name=os.getenv("AWS_DEFAULT_REGION"),
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
+)
+
 table = dynamodb.Table('Players')
 
 def get_player(player_id: str) -> Player | None:
