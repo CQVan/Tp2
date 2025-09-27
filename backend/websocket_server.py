@@ -52,9 +52,9 @@ async def register(request: Request):
         return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
     if get_player(userid):
         return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
-    player = Player(id=userid, elo=1000, password_hash=hash_password(password))
+    player = Player(id=userid, elo=100, password_hash=hash_password(password))
     create_player(player)
-    return {"success": True, "userid": userid, "elo": 1000}
+    return {"success": True, "userid": userid, "elo": 100}
 
 
 @app.post("/update-elo")
