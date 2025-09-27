@@ -1,11 +1,80 @@
 import uuid
 import secrets
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import JSONResponse
+from fastapi import status
 from collections import deque
 import math
+import hashlib
+from playerdb import get_player, create_player, update_player, Player
+import httpx
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify your frontend URL(s)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# --- Password hashing helpers ---
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+# --- WebSockets Endpoints (Corrected) ---
+
+# --- REST Endpoints ---
+
+@app.post("/auth/login")
+async def login(request: Request):
+    data = await request.json()
+    userid = data.get("userid")
+    password = data.get("password")
+    if not userid or not password:
+        return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
+    player = get_player(userid)
+    if not player or not hasattr(player, "password_hash"):
+        return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
+    if player.password_hash != hash_password(password):
+        return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
+    return {"success": True, "userid": userid, "elo": player.elo}
+
+
+@app.post("/auth/register")
+async def register(request: Request):
+    data = await request.json()
+    userid = data.get("userid")
+    password = data.get("password")
+    if not userid or not password:
+        return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
+    if get_player(userid):
+        return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
+    player = Player(id=userid, elo=1000, password_hash=hash_password(password))
+    create_player(player)
+    return {"success": True, "userid": userid, "elo": 1000}
+
+
+@app.post("/update-elo")
+async def update_elo(request: Request):
+    data = await request.json()
+    userid = data.get("userid")
+    sessionid = data.get("sessionid")
+    win = data.get("win")
+    if not userid or sessionid is None or win is None:
+        return JSONResponse({"success": False, "error": "Missing parameters."}, status_code=status.HTTP_400_BAD_REQUEST)
+    player = get_player(userid)
+    if not player:
+        return JSONResponse({"success": False, "error": "User not found."}, status_code=status.HTTP_404_NOT_FOUND)
+    # Update elo: +20 for win, -20 for loss
+    if win:
+        player.elo += 20
+    else:
+        player.elo -= 20
+    update_player(player)
+    return {"success": True, "userid": userid, "elo": player.elo}
 
 # --- Connection Manager for Broadcasting ---
 class ConnectionManager:
@@ -34,6 +103,20 @@ class ConnectionManager:
                 except Exception:
                     pass
             del self.active_connections[session_id]
+
+    async def update_elo_for_session(self, session_id: str, winner_userid: str, loser_userid: str):
+        # Call /update-elo for both winner and loser
+        async with httpx.AsyncClient() as client:
+            # Winner: win=True
+            await client.post(
+                "http://127.0.0.1:8000/update-elo",
+                json={"userid": winner_userid, "sessionid": session_id, "win": True}
+            )
+            # Loser: win=False
+            await client.post(
+                "http://127.0.0.1:8000/update-elo",
+                json={"userid": loser_userid, "sessionid": session_id, "win": False}
+            )
 
     async def broadcast(self, message: str, websocket: WebSocket, session_id: str):
         if session_id in self.active_connections:
@@ -142,12 +225,31 @@ async def match_ws(websocket: WebSocket, session_id: str):
     if not is_connected:
         return # Session was full
 
+    # Store user_id for this websocket
+    if not hasattr(manager, "ws_to_userid"):
+        manager.ws_to_userid = {}
+
     try:
+        # First message from each client should be their user_id
+        user_id = await websocket.receive_text()
+        manager.ws_to_userid[websocket] = user_id
         while True:
-            data = await websocket.receive_text()
-            await manager.broadcast(data, websocket, session_id)
+            data = await websocket.receive_json()
+            # If the message is a game over event, handle elo update
+            if isinstance(data, dict) and data.get("event") == "game_over":
+                winner = data.get("winner")
+                loser = data.get("loser")
+                if winner and loser:
+                    await manager.update_elo_for_session(session_id, winner, loser)
+            else:
+                # Broadcast to all in session except sender
+                for ws in manager.active_connections[session_id]:
+                    if ws != websocket:
+                        await ws.send_json(data)
     except WebSocketDisconnect:
         await manager.disconnect(websocket, session_id)
+        if hasattr(manager, "ws_to_userid"):
+            manager.ws_to_userid.pop(websocket, None)
         # Remove session from active_sessions if destroyed
         if session_id not in manager.active_connections:
             active_sessions.discard(session_id)
