@@ -1,0 +1,1221 @@
+[
+  {
+    "prompt": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice. You can return the answer in any order.",
+    "test_cases": [
+      { "inputs": [{ "nums": [2, 7, 11, 15], "target": 9 }], "outputs": [[0, 1], [1, 0]] },
+      { "inputs": [{ "nums": [3, 2, 4], "target": 6 }], "outputs": [[1, 2], [2, 1]] },
+      { "inputs": [{ "nums": [3, 3], "target": 6 }], "outputs": [[0, 1], [1, 0]] },
+      { "inputs": [{ "nums": [-3, 4, 3, 90], "target": 0 }], "outputs": [[0, 2], [2, 0]] },
+      { "inputs": [{ "nums": [0, 4, 3, 0], "target": 0 }], "outputs": [[0, 3], [3, 0]] },
+      { "inputs": [{ "nums": [1, 2, 5, 4, 11], "target": 9 }], "outputs": [[2, 3], [3, 2]] },
+      { "inputs": [{ "nums": [1, 5, 1, 5], "target": 10 }], "outputs": [[1, 3], [3, 1]] },
+      { "inputs": [{ "nums": [2, 5, 5, 11], "target": 10 }], "outputs": [[1, 2], [2, 1]] },
+      { "inputs": [{ "nums": [1, 2, 3, 4, 5, 6], "target": 11 }], "outputs": [[4, 5], [5, 4]] },
+      { "inputs": [{ "nums": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "target": 17 }], "outputs": [[8, 9], [9, 8]] },
+      { "inputs": [{ "nums": [1, 1], "target": 2 }], "outputs": [[0, 1], [1, 0]] }
+    ]
+  },
+  {
+    "prompt": "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if: (1) Open brackets must be closed by the same type of brackets. (2) Open brackets must be closed in the correct order. (3) Every close bracket has a corresponding open bracket of the same type.",
+    "test_cases": [
+      { "inputs": [{ "s": "()" }], "outputs": [true] },
+      { "inputs": [{ "s": "()[]{}" }], "outputs": [true] },
+      { "inputs": [{ "s": "(]" }], "outputs": [false] },
+      { "inputs": [{ "s": "([])" }], "outputs": [true] },
+      { "inputs": [{ "s": "([)]" }], "outputs": [false] },
+      { "inputs": [{ "s": "" }], "outputs": [true] }
+    ]
+  },
+  {
+    "prompt": "You are given the heads of two sorted linked lists list1 and list2. Merge the two lists into one sorted list by splicing together the nodes of the first two lists, and return the head of the merged linked list.",
+    "test_cases": [
+      { "inputs": [{ "list1": [1, 2, 4], "list2": [1, 3, 4] }], "outputs": [[1, 1, 2, 3, 4, 4]] },
+      { "inputs": [{ "list1": [], "list2": [] }], "outputs": [[]] },
+      { "inputs": [{ "list1": [], "list2": [0] }], "outputs": [[0]] },
+      { "inputs": [{ "list1": [1, 1, 2], "list2": [1, 3] }], "outputs": [[1, 1, 1, 2, 3]] }
+    ]
+  },
+  {
+    "prompt": "You are given an array prices where prices[i] is the price of a stock on the i-th day. Choose a single day to buy one stock and a different day in the future to sell it. Return the maximum profit you can achieve. If you cannot achieve any profit, return 0.",
+    "test_cases": [
+      { "inputs": [{ "prices": [7, 1, 5, 3, 6, 4] }], "outputs": [5] },
+      { "inputs": [{ "prices": [7, 6, 4, 3, 1] }], "outputs": [0] },
+      { "inputs": [{ "prices": [1, 2] }], "outputs": [1] },
+      { "inputs": [{ "prices": [2, 4, 1] }], "outputs": [2] }
+    ]
+  },
+  {
+    "prompt": "A phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Given a string s, return true if it is a palindrome, or false otherwise.",
+    "test_cases": [
+      { "inputs": [{ "s": "A man, a plan, a canal: Panama" }], "outputs": [true] },
+      { "inputs": [{ "s": "race a car" }], "outputs": [false] },
+      { "inputs": [{ "s": " " }], "outputs": [true] },
+      { "inputs": [{ "s": "0P" }], "outputs": [false] },
+      { "inputs": [{ "s": "ab_a" }], "outputs": [true] }
+    ]
+  },
+{
+  "prompt": "Given the head of a singly linked list, reverse the list and return the reversed list.",
+  "test_cases": [
+    { "inputs": [{ "head": [1,2,3,4,5] }], "outputs": [[5,4,3,2,1]] },
+    { "inputs": [{ "head": [1,2] }], "outputs": [[2,1]] },
+    { "inputs": [{ "head": [] }], "outputs": [[]] },
+    { "inputs": [{ "head": [7] }], "outputs": [[7]] }
+  ]
+},
+{
+  "prompt": "Given a sorted array of integers nums and an integer target, return its index if target exists; otherwise, return -1.",
+  "test_cases": [
+    { "inputs": [{ "nums": [-1,0,3,5,9,12], "target": 9 }], "outputs": [4] },
+    { "inputs": [{ "nums": [-1,0,3,5,9,12], "target": 2 }], "outputs": [-1] },
+    { "inputs": [{ "nums": [5], "target": 5 }], "outputs": [0] },
+    { "inputs": [{ "nums": [1,2,3,4,5,6], "target": 1 }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "You are a product manager with versions 1..n. All versions after the first bad version are bad. Find the first bad version. (For testing here, inputs include n and firstBad to simulate the API.)",
+  "test_cases": [
+    { "inputs": [{ "n": 5, "firstBad": 4 }], "outputs": [4] },
+    { "inputs": [{ "n": 1, "firstBad": 1 }], "outputs": [1] },
+    { "inputs": [{ "n": 10, "firstBad": 7 }], "outputs": [7] }
+  ]
+},
+{
+  "prompt": "Given two strings ransomNote and magazine, return true if ransomNote can be constructed from magazine (each letter in magazine can only be used once).",
+  "test_cases": [
+    { "inputs": [{ "ransomNote": "a", "magazine": "b" }], "outputs": [false] },
+    { "inputs": [{ "ransomNote": "aa", "magazine": "ab" }], "outputs": [false] },
+    { "inputs": [{ "ransomNote": "aa", "magazine": "aab" }], "outputs": [true] },
+    { "inputs": [{ "ransomNote": "abc", "magazine": "cabbad" }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Given an array nums of size n, return the majority element. The majority element is the element that appears more than floor(n/2) times (it is guaranteed to exist).",
+  "test_cases": [
+    { "inputs": [{ "nums": [3,2,3] }], "outputs": [3] },
+    { "inputs": [{ "nums": [2,2,1,1,1,2,2] }], "outputs": [2] },
+    { "inputs": [{ "nums": [1] }], "outputs": [1] },
+    { "inputs": [{ "nums": [6,6,6,7,7] }], "outputs": [6] }
+  ]
+},
+{
+  "prompt": "Given a large integer represented as an array of digits, increment the integer by one and return the resulting array of digits.",
+  "test_cases": [
+    { "inputs": [{ "digits": [1,2,3] }], "outputs": [[1,2,4]] },
+    { "inputs": [{ "digits": [4,3,2,1] }], "outputs": [[4,3,2,2]] },
+    { "inputs": [{ "digits": [9] }], "outputs": [[1,0]] },
+    { "inputs": [{ "digits": [9,9,9] }], "outputs": [[1,0,0,0]] }
+  ]
+},
+{
+  "prompt": "You are climbing a staircase. It takes n steps to reach the top. Each time you can climb 1 or 2 steps. Return how many distinct ways you can climb to the top.",
+  "test_cases": [
+    { "inputs": [{ "n": 2 }], "outputs": [2] },
+    { "inputs": [{ "n": 3 }], "outputs": [3] },
+    { "inputs": [{ "n": 1 }], "outputs": [1] },
+    { "inputs": [{ "n": 5 }], "outputs": [8] }
+  ]
+},
+{
+  "prompt": "Given a sorted array nums, remove the duplicates in-place such that each unique element appears only once. Return k (the number of unique elements) and ensure the first k elements of nums contain those unique values in order.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,1,2] }], "outputs": [{ "k": 2, "nums": [1,2] }] },
+    { "inputs": [{ "nums": [0,0,1,1,1,2,2,3,3,4] }], "outputs": [{ "k": 5, "nums": [0,1,2,3,4] }] },
+    { "inputs": [{ "nums": [1,1,1] }], "outputs": [{ "k": 1, "nums": [1] }] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums, move all 0's to the end while maintaining the relative order of the non-zero elements. Do this in-place and return the final array.",
+  "test_cases": [
+    { "inputs": [{ "nums": [0,1,0,3,12] }], "outputs": [[1,3,12,0,0]] },
+    { "inputs": [{ "nums": [0] }], "outputs": [[0]] },
+    { "inputs": [{ "nums": [2,1] }], "outputs": [[2,1]] },
+    { "inputs": [{ "nums": [1,0,1] }], "outputs": [[1,1,0]] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums, return true if any value appears at least twice; otherwise return false.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,2,3,1] }], "outputs": [true] },
+    { "inputs": [{ "nums": [1,2,3,4] }], "outputs": [false] },
+    { "inputs": [{ "nums": [1,1,1,3,3,4,3,2,4,2] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums, find the contiguous subarray (containing at least one number) with the largest sum and return its sum.",
+  "test_cases": [
+    { "inputs": [{ "nums": [-2,1,-3,4,-1,2,1,-5,4] }], "outputs": [6] },
+    { "inputs": [{ "nums": [1] }], "outputs": [1] },
+    { "inputs": [{ "nums": [5,4,-1,7,8] }], "outputs": [23] },
+    { "inputs": [{ "nums": [-1,-2,-3] }], "outputs": [-1] }
+  ]
+},
+{
+  "prompt": "Given two strings s and t, return true if t is an anagram of s, and false otherwise.",
+  "test_cases": [
+    { "inputs": [{ "s": "anagram", "t": "nagaram" }], "outputs": [true] },
+    { "inputs": [{ "s": "rat", "t": "car" }], "outputs": [false] },
+    { "inputs": [{ "s": "ab", "t": "ba" }], "outputs": [true] },
+    { "inputs": [{ "s": "aacc", "t": "ccac" }], "outputs": [false] }
+  ]
+},
+{
+  "prompt": "Given two integer arrays nums1 and nums2, return their intersection. Each element in the result must appear as many times as it shows in both arrays. You may return the result in any order.",
+  "test_cases": [
+    { "inputs": [{ "nums1": [1,2,2,1], "nums2": [2,2] }], "outputs": [[2,2]] },
+    { "inputs": [{ "nums1": [4,9,5], "nums2": [9,4,9,8,4] }], "outputs": [[4,9],[9,4]] },
+    { "inputs": [{ "nums1": [1,2,2,3], "nums2": [2,2] }], "outputs": [[2,2]] },
+    { "inputs": [{ "nums1": [1,2], "nums2": [3,4] }], "outputs": [[]] }
+  ]
+},
+{
+  "prompt": "Given a non-empty array of integers nums, every element appears twice except for one. Find that single one.",
+  "test_cases": [
+    { "inputs": [{ "nums": [2,2,1] }], "outputs": [1] },
+    { "inputs": [{ "nums": [4,1,2,1,2] }], "outputs": [4] },
+    { "inputs": [{ "nums": [1] }], "outputs": [1] }
+  ]
+},
+{
+  "prompt": "Given the head of a singly linked list, return true if it is a palindrome, or false otherwise.",
+  "test_cases": [
+    { "inputs": [{ "head": [1,2,2,1] }], "outputs": [true] },
+    { "inputs": [{ "head": [1,2] }], "outputs": [false] },
+    { "inputs": [{ "head": [1,2,3,2,1] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "You are given two integer arrays nums1 and nums2 sorted in non-decreasing order, and two integers m and n. Merge nums2 into nums1 as one sorted array and return the final nums1.",
+  "test_cases": [
+    { "inputs": [{ "nums1": [1,2,3,0,0,0], "m": 3, "nums2": [2,5,6], "n": 3 }], "outputs": [[1,2,2,3,5,6]] },
+    { "inputs": [{ "nums1": [1], "m": 1, "nums2": [], "n": 0 }], "outputs": [[1]] },
+    { "inputs": [{ "nums1": [0], "m": 0, "nums2": [1], "n": 1 }], "outputs": [[1]] },
+    { "inputs": [{ "nums1": [4,5,6,0,0,0], "m": 3, "nums2": [1,2,3], "n": 3 }], "outputs": [[1,2,3,4,5,6]] }
+  ]
+},
+{
+  "prompt": "Given an array nums containing n distinct numbers in the range [0, n], return the one number in the range that is missing from the array.",
+  "test_cases": [
+    { "inputs": [{ "nums": [3,0,1] }], "outputs": [2] },
+    { "inputs": [{ "nums": [0,1] }], "outputs": [2] },
+    { "inputs": [{ "nums": [9,6,4,2,3,5,7,0,1] }], "outputs": [8] },
+    { "inputs": [{ "nums": [0] }], "outputs": [1] }
+  ]
+},
+{
+  "prompt": "Given an integer numRows, return the first numRows of Pascal's triangle.",
+  "test_cases": [
+    { "inputs": [{ "numRows": 5 }], "outputs": [[[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]] },
+    { "inputs": [{ "numRows": 1 }], "outputs": [[[1]]] },
+    { "inputs": [{ "numRows": 2 }], "outputs": [[[1],[1,1]]] },
+    { "inputs": [{ "numRows": 6 }], "outputs": [[[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1],[1,5,10,10,5,1]]] }
+  ]
+},
+{
+  "prompt": "Given the roots of two binary trees p and q, return true if they are the same tree, and false otherwise.",
+  "test_cases": [
+    { "inputs": [{ "p": [1,2,3], "q": [1,2,3] }], "outputs": [true] },
+    { "inputs": [{ "p": [1,2], "q": [1,null,2] }], "outputs": [false] },
+    { "inputs": [{ "p": [1,2,1], "q": [1,1,2] }], "outputs": [false] },
+    { "inputs": [{ "p": [], "q": [] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Given the root of a binary tree, check whether it is a mirror of itself (symmetric around its center).",
+  "test_cases": [
+    { "inputs": [{ "root": [1,2,2,3,4,4,3] }], "outputs": [true] },
+    { "inputs": [{ "root": [1,2,2,null,3,null,3] }], "outputs": [false] },
+    { "inputs": [{ "root": [] }], "outputs": [true] },
+    { "inputs": [{ "root": [1,2,2,3,null,null,3] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Given the root of a binary tree, return its maximum depth (number of nodes along the longest path from the root down to the farthest leaf).",
+  "test_cases": [
+    { "inputs": [{ "root": [3,9,20,null,null,15,7] }], "outputs": [3] },
+    { "inputs": [{ "root": [1,null,2] }], "outputs": [2] },
+    { "inputs": [{ "root": [] }], "outputs": [0] },
+    { "inputs": [{ "root": [1,2,3,4,5] }], "outputs": [3] }
+  ]
+},
+{
+  "prompt": "Given the root of a binary tree, return the length (in edges) of the tree's diameter: the longest path between any two nodes.",
+  "test_cases": [
+    { "inputs": [{ "root": [1,2,3,4,5] }], "outputs": [3] },
+    { "inputs": [{ "root": [1,2] }], "outputs": [1] },
+    { "inputs": [{ "root": [1] }], "outputs": [0] },
+    { "inputs": [{ "root": [1,2,3,4,null,null,5] }], "outputs": [4] }
+  ]
+},
+{
+  "prompt": "An image is represented by an m x n grid 'image'. Perform a flood fill on the pixel (sr, sc): change it and any 4-directionally connected pixels with the same original color to 'color'. Return the modified image.",
+  "test_cases": [
+    { "inputs": [{ "image": [[1,1,1],[1,1,0],[1,0,1]], "sr": 1, "sc": 1, "color": 2 }], "outputs": [[[2,2,2],[2,2,0],[2,0,1]]] },
+    { "inputs": [{ "image": [[0,0,0],[0,0,0]], "sr": 0, "sc": 0, "color": 0 }], "outputs": [[[0,0,0],[0,0,0]]] },
+    { "inputs": [{ "image": [[0,0,0],[0,1,1]], "sr": 1, "sc": 1, "color": 1 }], "outputs": [[[0,0,0],[0,1,1]]] },
+    { "inputs": [{ "image": [[0,0,0],[0,1,1]], "sr": 1, "sc": 1, "color": 2 }], "outputs": [[[0,0,0],[0,2,2]]] }
+  ]
+},
+{
+  "prompt": "The Fibonacci numbers are defined as F(0)=0, F(1)=1, and F(n)=F(n-1)+F(n-2) for n>1. Given n, return F(n).",
+  "test_cases": [
+    { "inputs": [{ "n": 0 }], "outputs": [0] },
+    { "inputs": [{ "n": 2 }], "outputs": [1] },
+    { "inputs": [{ "n": 4 }], "outputs": [3] },
+    { "inputs": [{ "n": 10 }], "outputs": [55] }
+  ]
+},
+{
+  "prompt": "Given a binary tree, return its minimum depth: the number of nodes along the shortest path from the root node down to the nearest leaf node.",
+  "test_cases": [
+    { "inputs": [{ "root": [3,9,20,null,null,15,7] }], "outputs": [2] },
+    { "inputs": [{ "root": [2,null,3,null,4,null,5,null,6] }], "outputs": [5] },
+    { "inputs": [{ "root": [] }], "outputs": [0] },
+    { "inputs": [{ "root": [1,2,3,4,5] }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each node contains a single digit. Add the two numbers and return the sum as a linked list (also in reverse order).",
+  "test_cases": [
+    { "inputs": [{ "l1": [2,4,3], "l2": [5,6,4] }], "outputs": [[7,0,8]] },
+    { "inputs": [{ "l1": [0], "l2": [0] }], "outputs": [[0]] },
+    { "inputs": [{ "l1": [9,9,9,9,9,9,9], "l2": [9,9,9,9] }], "outputs": [[8,9,9,9,0,0,0,1]] },
+    { "inputs": [{ "l1": [5], "l2": [5] }], "outputs": [[0,1]] }
+  ]
+},
+{
+  "prompt": "Given a string s, find the length of the longest substring without repeating characters.",
+  "test_cases": [
+    { "inputs": [{ "s": "abcabcbb" }], "outputs": [3] },
+    { "inputs": [{ "s": "bbbbb" }], "outputs": [1] },
+    { "inputs": [{ "s": "pwwkew" }], "outputs": [3] },
+    { "inputs": [{ "s": "dvdf" }], "outputs": [3] },
+    { "inputs": [{ "s": "" }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "Given a string s, return the longest palindromic substring in s.",
+  "test_cases": [
+    { "inputs": [{ "s": "babad" }], "outputs": ["bab", "aba"] },
+    { "inputs": [{ "s": "cbbd" }], "outputs": ["bb"] },
+    { "inputs": [{ "s": "a" }], "outputs": ["a"] },
+    { "inputs": [{ "s": "ac" }], "outputs": ["a", "c"] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums, return all unique triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, j != k, and nums[i] + nums[j] + nums[k] == 0. The solution set must not contain duplicate triplets.",
+  "test_cases": [
+    { "inputs": [{ "nums": [-1,0,1,2,-1,-4] }], "outputs": [[[-1,-1,2],[-1,0,1]]] },
+    { "inputs": [{ "nums": [0,1,1] }], "outputs": [[]] },
+    { "inputs": [{ "nums": [0,0,0] }], "outputs": [[[0,0,0]]] }
+  ]
+},
+{
+  "prompt": "Given n vertical lines represented by array height, find two lines that, together with the x-axis, form a container that holds the most water. Return the maximum area.",
+  "test_cases": [
+    { "inputs": [{ "height": [1,8,6,2,5,4,8,3,7] }], "outputs": [49] },
+    { "inputs": [{ "height": [1,1] }], "outputs": [1] },
+    { "inputs": [{ "height": [4,3,2,1,4] }], "outputs": [16] },
+    { "inputs": [{ "height": [1,2,1] }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "Implement myAtoi(string s) which converts a string to a 32-bit signed integer. Trim spaces, handle optional +/- sign, read digits until non-digit, and clamp to [-2^31, 2^31-1]. If no digits, return 0.",
+  "test_cases": [
+    { "inputs": [{ "s": "42" }], "outputs": [42] },
+    { "inputs": [{ "s": "   -42" }], "outputs": [-42] },
+    { "inputs": [{ "s": "4193 with words" }], "outputs": [4193] },
+    { "inputs": [{ "s": "words and 987" }], "outputs": [0] },
+    { "inputs": [{ "s": "-91283472332" }], "outputs": [-2147483648] },
+    { "inputs": [{ "s": "+1" }], "outputs": [1] },
+    { "inputs": [{ "s": "  +0 123" }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "Given a string digits containing 2-9 inclusive, return all possible letter combinations it could represent using telephone keypad mapping. Return an empty list for empty input.",
+  "test_cases": [
+    { "inputs": [{ "digits": "23" }], "outputs": [["ad","ae","af","bd","be","bf","cd","ce","cf"]] },
+    { "inputs": [{ "digits": "" }], "outputs": [[]] },
+    { "inputs": [{ "digits": "2" }], "outputs": [["a","b","c"]] },
+    { "inputs": [{ "digits": "79" }], "outputs": [["pw","px","py","pz","qw","qx","qy","qz","rw","rx","ry","rz","sw","sx","sy","sz"]] }
+  ]
+},
+{
+  "prompt": "Given n, generate all combinations of n pairs of well-formed parentheses.",
+  "test_cases": [
+    { "inputs": [{ "n": 3 }], "outputs": [["((()))","(()())","(())()","()(())","()()()"]] },
+    { "inputs": [{ "n": 1 }], "outputs": [["()"]] },
+    { "inputs": [{ "n": 2 }], "outputs": [["(())","()()"]] }
+  ]
+},
+{
+  "prompt": "Given the head of a linked list, remove the n-th node from the end of the list and return its head.",
+  "test_cases": [
+    { "inputs": [{ "head": [1,2,3,4,5], "n": 2 }], "outputs": [[1,2,3,5]] },
+    { "inputs": [{ "head": [1], "n": 1 }], "outputs": [[]] },
+    { "inputs": [{ "head": [1,2], "n": 1 }], "outputs": [[1]] },
+    { "inputs": [{ "head": [1,2], "n": 2 }], "outputs": [[2]] }
+  ]
+},
+{
+  "prompt": "Determine if a 9x9 Sudoku board is valid. Only filled cells need validation: each row, column, and 3x3 sub-box must contain digits 1-9 without repetition.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "board": [
+          ["5","3",".",".","7",".",".",".","."],
+          ["6",".",".","1","9","5",".",".","."],
+          [".","9","8",".",".",".",".","6","."],
+          ["8",".",".",".","6",".",".",".","3"],
+          ["4",".",".","8",".","3",".",".","1"],
+          ["7",".",".",".","2",".",".",".","6"],
+          [".","6",".",".",".",".","2","8","."],
+          [".",".",".","4","1","9",".",".","5"],
+          [".",".",".",".","8",".",".","7","9"]
+        ]
+      }],
+      "outputs": [true]
+    },
+    {
+      "inputs": [{
+        "board": [
+          ["8","3",".",".","7",".",".",".","."],
+          ["6",".",".","1","9","5",".",".","."],
+          [".","9","8",".",".",".",".","6","."],
+          ["8",".",".",".","6",".",".",".","3"],
+          ["4",".",".","8",".","3",".",".","1"],
+          ["7",".",".",".","2",".",".",".","6"],
+          [".","6",".",".",".",".","2","8","."],
+          [".",".",".","4","1","9",".",".","5"],
+          [".",".",".",".","8",".",".","7","9"]
+        ]
+      }],
+      "outputs": [false]
+    }
+  ]
+},
+{
+  "prompt": "Given a rotated sorted array nums (no duplicates) and an integer target, return its index if found; otherwise return -1.",
+  "test_cases": [
+    { "inputs": [{ "nums": [4,5,6,7,0,1,2], "target": 0 }], "outputs": [4] },
+    { "inputs": [{ "nums": [4,5,6,7,0,1,2], "target": 3 }], "outputs": [-1] },
+    { "inputs": [{ "nums": [1], "target": 0 }], "outputs": [-1] }
+  ]
+},
+{
+  "prompt": "Given an array of distinct integers candidates and a target, return all unique combinations where the chosen numbers sum to target. You may use each candidate unlimited times.",
+  "test_cases": [
+    { "inputs": [{ "candidates": [2,3,6,7], "target": 7 }], "outputs": [[[2,2,3],[7]]] },
+    { "inputs": [{ "candidates": [2,3,5], "target": 8 }], "outputs": [[[2,2,2,2],[2,3,3],[3,5]]] },
+    { "inputs": [{ "candidates": [2], "target": 1 }], "outputs": [[]] }
+  ]
+},
+{
+  "prompt": "Given an array of unique integers nums, return all possible permutations.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,2,3] }], "outputs": [[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]] },
+    { "inputs": [{ "nums": [0,1] }], "outputs": [[[0,1],[1,0]]] },
+    { "inputs": [{ "nums": [1] }], "outputs": [[[1]]] }
+  ]
+},
+{
+  "prompt": "Rotate an n x n matrix by 90 degrees clockwise in-place.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "matrix": [
+          [1,2,3],
+          [4,5,6],
+          [7,8,9]
+        ]
+      }],
+      "outputs": [
+        [
+          [7,4,1],
+          [8,5,2],
+          [9,6,3]
+        ]
+      ]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [5,1,9,11],
+          [2,4,8,10],
+          [13,3,6,7],
+          [15,14,12,16]
+        ]
+      }],
+      "outputs": [
+        [
+          [15,13,2,5],
+          [14,3,4,1],
+          [12,6,8,9],
+          [16,7,10,11]
+        ]
+      ]
+    }
+  ]
+},
+{
+  "prompt": "Group the strings that are anagrams of each other and return the groups in any order.",
+  "test_cases": [
+    {
+      "inputs": [{ "strs": ["eat","tea","tan","ate","nat","bat"] }],
+      "outputs": [
+        [["eat","tea","ate"],["tan","nat"],["bat"]],
+        [["tan","nat"],["eat","tea","ate"],["bat"]]
+      ]
+    },
+    {
+      "inputs": [{ "strs": [""] }],
+      "outputs": [[[""]]]
+    },
+    {
+      "inputs": [{ "strs": ["a"] }],
+      "outputs": [[["a"]]]
+    }
+  ]
+},
+{
+  "prompt": "Given an integer array nums where nums[i] is the maximum jump length from index i, starting at index 0, return true if you can reach the last index; otherwise return false.",
+  "test_cases": [
+    { "inputs": [{ "nums": [2,3,1,1,4] }], "outputs": [true] },
+    { "inputs": [{ "nums": [3,2,1,0,4] }], "outputs": [false] },
+    { "inputs": [{ "nums": [0] }], "outputs": [true] },
+    { "inputs": [{ "nums": [2,0] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Given an array of intervals where intervals[i] = [start_i, end_i], merge all overlapping intervals and return the result as a list of non-overlapping intervals covering all the intervals in the input.",
+  "test_cases": [
+    { "inputs": [{ "intervals": [[1,3],[2,6],[8,10],[15,18]] }], "outputs": [[[1,6],[8,10],[15,18]]] },
+    { "inputs": [{ "intervals": [[1,4],[4,5]] }], "outputs": [[[1,5]]] },
+    { "inputs": [{ "intervals": [[1,4],[0,4]] }], "outputs": [[[0,4]]] },
+    { "inputs": [{ "intervals": [[1,4],[2,3]] }], "outputs": [[[1,4]]] }
+  ]
+},
+{
+  "prompt": "A robot is located at the top-left corner of an m x n grid. The robot can only move either down or right at any point in time. Return the number of possible unique paths to the bottom-right corner.",
+  "test_cases": [
+    { "inputs": [{ "m": 3, "n": 7 }], "outputs": [28] },
+    { "inputs": [{ "m": 3, "n": 2 }], "outputs": [3] },
+    { "inputs": [{ "m": 1, "n": 10 }], "outputs": [1] },
+    { "inputs": [{ "m": 10, "n": 10 }], "outputs": [48620] }
+  ]
+},
+{
+  "prompt": "Given a m x n grid filled with non-negative numbers, find a path from top-left to bottom-right that minimizes the sum of all numbers along its path. You can only move down or right.",
+  "test_cases": [
+    { "inputs": [{ "grid": [[1,3,1],[1,5,1],[4,2,1]] }], "outputs": [7] },
+    { "inputs": [{ "grid": [[1,2,3],[4,5,6]] }], "outputs": [12] },
+    { "inputs": [{ "grid": [[1,2,5],[3,2,1]] }], "outputs": [6] },
+    { "inputs": [{ "grid": [[5]] }], "outputs": [5] }
+  ]
+},
+{
+  "prompt": "Given an array nums with values 0, 1, and 2, sort them in-place so that values are grouped as 0s, then 1s, then 2s.",
+  "test_cases": [
+    { "inputs": [{ "nums": [2,0,2,1,1,0] }], "outputs": [[0,0,1,1,2,2]] },
+    { "inputs": [{ "nums": [2,0,1] }], "outputs": [[0,1,2]] },
+    { "inputs": [{ "nums": [0] }], "outputs": [[0]] },
+    { "inputs": [{ "nums": [1,2,0] }], "outputs": [[0,1,2]] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums of unique elements, return all possible subsets (the power set). The solution set must not contain duplicate subsets.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,2,3] }], "outputs": [[[],[1],[2],[3],[1,2],[1,3],[2,3],[1,2,3]]] },
+    { "inputs": [{ "nums": [0] }], "outputs": [[[],[0]]] },
+    { "inputs": [{ "nums": [1,2] }], "outputs": [[[],[1],[2],[1,2]]] }
+  ]
+},
+{
+  "prompt": "Given an m x n board of characters and a string word, return true if word exists in the grid. The word can be constructed from letters of sequentially adjacent cells (horizontally or vertically). A cell may not be used more than once.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "board": [
+          ["A","B","C","E"],
+          ["S","F","C","S"],
+          ["A","D","E","E"]
+        ],
+        "word": "ABCCED"
+      }],
+      "outputs": [true]
+    },
+    {
+      "inputs": [{
+        "board": [
+          ["A","B","C","E"],
+          ["S","F","C","S"],
+          ["A","D","E","E"]
+        ],
+        "word": "SEE"
+      }],
+      "outputs": [true]
+    },
+    {
+      "inputs": [{
+        "board": [
+          ["A","B","C","E"],
+          ["S","F","C","S"],
+          ["A","D","E","E"]
+        ],
+        "word": "ABCB"
+      }],
+      "outputs": [false]
+    }
+  ]
+},
+{
+  "prompt": "Given an m x n integer matrix, if an element is 0, set its entire row and column to 0 in-place. Return the resulting matrix.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "matrix": [
+          [1,1,1],
+          [1,0,1],
+          [1,1,1]
+        ]
+      }],
+      "outputs": [
+        [
+          [1,0,1],
+          [0,0,0],
+          [1,0,1]
+        ]
+      ]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [0,1,2,0],
+          [3,4,5,2],
+          [1,3,1,5]
+        ]
+      }],
+      "outputs": [
+        [
+          [0,0,0,0],
+          [0,4,5,0],
+          [0,3,1,0]
+        ]
+      ]
+    }
+  ]
+},
+{
+  "prompt": "Search a target value in an m x n matrix where each row is sorted ascending left→right and each column is sorted ascending top→bottom. Return true if found, else false.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "matrix": [
+          [1,4,7,11,15],
+          [2,5,8,12,19],
+          [3,6,9,16,22],
+          [10,13,14,17,24],
+          [18,21,23,26,30]
+        ],
+        "target": 5
+      }],
+      "outputs": [true]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [1,4,7,11,15],
+          [2,5,8,12,19],
+          [3,6,9,16,22],
+          [10,13,14,17,24],
+          [18,21,23,26,30]
+        ],
+        "target": 20
+      }],
+      "outputs": [false]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [1,2,3],
+          [4,5,6],
+          [7,8,9]
+        ],
+        "target": 8
+      }],
+      "outputs": [true]
+    }
+  ]
+},
+{
+  "prompt": "Given the root of a binary search tree and an integer k, return the k-th smallest value (1-indexed) in the tree.",
+  "test_cases": [
+    { "inputs": [{ "root": [3,1,4,null,2], "k": 1 }], "outputs": [1] },
+    { "inputs": [{ "root": [5,3,6,2,4,null,null,1], "k": 3 }], "outputs": [3] },
+    { "inputs": [{ "root": [2,1,3], "k": 2 }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "Given an m x n 2D grid map of '1's (land) and '0's (water), return the number of islands. An island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "grid": [
+          ["1","1","1","1","0"],
+          ["1","1","0","1","0"],
+          ["1","1","0","0","0"],
+          ["0","0","0","0","0"]
+        ]
+      }],
+      "outputs": [1]
+    },
+    {
+      "inputs": [{
+        "grid": [
+          ["1","1","0","0","0"],
+          ["1","1","0","0","0"],
+          ["0","0","1","0","0"],
+          ["0","0","0","1","1"]
+        ]
+      }],
+      "outputs": [3]
+    },
+    {
+      "inputs": [{
+        "grid": [
+          ["0","0","0"],
+          ["0","0","0"]
+        ]
+      }],
+      "outputs": [0]
+    }
+  ]
+},
+{
+  "prompt": "There are numCourses labeled 0..numCourses-1. Given prerequisites where prerequisites[i] = [a,b] means take b before a, return true if you can finish all courses, else false.",
+  "test_cases": [
+    { "inputs": [{ "numCourses": 2, "prerequisites": [[1,0]] }], "outputs": [true] },
+    { "inputs": [{ "numCourses": 2, "prerequisites": [[1,0],[0,1]] }], "outputs": [false] },
+    { "inputs": [{ "numCourses": 4, "prerequisites": [[1,0],[2,0],[3,1],[3,2]] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Implement a Trie with insert(word), search(word) returning exact match, and startsWith(prefix) returning whether any word starts with prefix.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "ops": ["Trie","insert","search","search","startsWith","insert","search"],
+        "args": [[],["apple"],["apple"],["app"],["app"],["app"],["app"]]
+      }],
+      "outputs": [null,null,true,false,true,null,true]
+    },
+    {
+      "inputs": [{
+        "ops": ["Trie","insert","insert","search","startsWith"],
+        "args": [[],["a"],["ab"],["a"],["ab"]]
+      }],
+      "outputs": [null,null,null,true,true]
+    }
+  ]
+},
+{
+  "prompt": "Design a data structure that supports addWord(word) and search(word), where search can use '.' to match any letter.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "ops": ["WordDictionary","addWord","addWord","addWord","search","search","search","search"],
+        "args": [[],["bad"],["dad"],["mad"],["pad"],["bad"],[".ad"],["b.."]]
+      }],
+      "outputs": [null,null,null,null,false,true,true,true]
+    },
+    {
+      "inputs": [{
+        "ops": ["WordDictionary","addWord","search","search","search"],
+        "args": [[],["a"],["."],["a"],["aa"]]
+      }],
+      "outputs": [null,null,true,true,false]
+    }
+  ]
+},
+{
+  "prompt": "A message containing letters A-Z is encoded as 'A'->1, 'B'->2, ..., 'Z'->26. Given a string s containing only digits, return the number of ways to decode it.",
+  "test_cases": [
+    { "inputs": [{ "s": "12" }], "outputs": [2] },
+    { "inputs": [{ "s": "226" }], "outputs": [3] },
+    { "inputs": [{ "s": "06" }], "outputs": [0] },
+    { "inputs": [{ "s": "10" }], "outputs": [1] }
+  ]
+},
+{
+  "prompt": "Given a non-empty array nums containing only positive integers, determine if the array can be partitioned into two subsets such that the sums of elements in both subsets are equal.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,5,11,5] }], "outputs": [true] },
+    { "inputs": [{ "nums": [1,2,3,5] }], "outputs": [false] },
+    { "inputs": [{ "nums": [2,2,1,1] }], "outputs": [true] },
+    { "inputs": [{ "nums": [2,2,2,3] }], "outputs": [false] }
+  ]
+},
+{
+  "prompt": "You are given an integer array coins representing coin denominations and an integer amount. Return the fewest number of coins needed to make up the amount. If it is not possible, return -1.",
+  "test_cases": [
+    { "inputs": [{ "coins": [1,2,5], "amount": 11 }], "outputs": [3] },
+    { "inputs": [{ "coins": [2], "amount": 3 }], "outputs": [-1] },
+    { "inputs": [{ "coins": [1], "amount": 0 }], "outputs": [0] },
+    { "inputs": [{ "coins": [1,3,4], "amount": 6 }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "You are a professional robber planning to rob houses arranged in a circle. Adjacent houses cannot both be robbed. Return the maximum amount of money you can rob.",
+  "test_cases": [
+    { "inputs": [{ "nums": [2,3,2] }], "outputs": [3] },
+    { "inputs": [{ "nums": [1,2,3,1] }], "outputs": [4] },
+    { "inputs": [{ "nums": [1,2,3] }], "outputs": [3] },
+    { "inputs": [{ "nums": [0] }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums, return an array answer such that answer[i] is the product of all the elements of nums except nums[i]. Do it in O(n) time without using division.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,2,3,4] }], "outputs": [[24,12,8,6]] },
+    { "inputs": [{ "nums": [-1,1,0,-3,3] }], "outputs": [[0,0,9,0,0]] },
+    { "inputs": [{ "nums": [2,3,4,5] }], "outputs": [[60,40,30,24]] }
+  ]
+},
+{
+  "prompt": "Suppose an array of length n sorted in ascending order is rotated between 1 and n times. Return the minimum element (all elements are unique).",
+  "test_cases": [
+    { "inputs": [{ "nums": [3,4,5,1,2] }], "outputs": [1] },
+    { "inputs": [{ "nums": [4,5,6,7,0,1,2] }], "outputs": [0] },
+    { "inputs": [{ "nums": [11,13,15,17] }], "outputs": [11] },
+    { "inputs": [{ "nums": [2,1] }], "outputs": [1] }
+  ]
+},
+{
+  "prompt": "A peak element is an element that is strictly greater than its neighbors. Given an array nums, return the index of any peak element.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,2,3,1] }], "outputs": [2] },
+    { "inputs": [{ "nums": [1,2,1,3,5,6,4] }], "outputs": [1,5] },
+    { "inputs": [{ "nums": [1] }], "outputs": [0] },
+    { "inputs": [{ "nums": [2,1] }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "Given the root of a binary tree, return the values of the nodes you can see from the right side (from top to bottom).",
+  "test_cases": [
+    { "inputs": [{ "root": [1,2,3,null,5,null,4] }], "outputs": [[1,3,4]] },
+    { "inputs": [{ "root": [1,null,3] }], "outputs": [[1,3]] },
+    { "inputs": [{ "root": [] }], "outputs": [[]] },
+    { "inputs": [{ "root": [1,2,3,4,null,null,5] }], "outputs": [[1,3,5]] }
+  ]
+},
+{
+  "prompt": "Given a binary tree (not necessarily a BST) and two nodes p and q (by value), return the value of their lowest common ancestor (LCA).",
+  "test_cases": [
+    { "inputs": [{ "root": [3,5,1,6,2,0,8,null,null,7,4], "p": 5, "q": 1 }], "outputs": [3] },
+    { "inputs": [{ "root": [3,5,1,6,2,0,8,null,null,7,4], "p": 5, "q": 4 }], "outputs": [5] },
+    { "inputs": [{ "root": [1,2], "p": 1, "q": 2 }], "outputs": [1] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums and an integer k, return the k-th largest element in the array (1-indexed by sorted order).",
+  "test_cases": [
+    { "inputs": [{ "nums": [3,2,1,5,6,4], "k": 2 }], "outputs": [5] },
+    { "inputs": [{ "nums": [3,2,3,1,2,4,5,5,6], "k": 4 }], "outputs": [4] },
+    { "inputs": [{ "nums": [2,1], "k": 1 }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "Given an integer array nums and an integer k, return the k most frequent elements. You may return the answer in any order.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,1,1,2,2,3], "k": 2 }], "outputs": [[1,2],[2,1]] },
+    { "inputs": [{ "nums": [1], "k": 1 }], "outputs": [[1]] },
+    { "inputs": [{ "nums": [4,1,-1,2,-1,2,3], "k": 2 }], "outputs": [[-1,2],[2,-1]] }
+  ]
+},
+{
+  "prompt": "Evaluate the value of an arithmetic expression in Reverse Polish Notation. Valid operators are +, -, *, /. Each operand may be an integer or another expression. Division truncates toward zero.",
+  "test_cases": [
+    { "inputs": [{ "tokens": ["2","1","+","3","*"] }], "outputs": [9] },
+    { "inputs": [{ "tokens": ["4","13","5","/","+"] }], "outputs": [6] },
+    { "inputs": [{ "tokens": ["10","6","9","3","+","-11","*","/","*","17","+","5","+"] }], "outputs": [22] },
+    { "inputs": [{ "tokens": ["-2","3","/"] }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "Given a string s representing a valid expression, implement a basic calculator to evaluate it. The expression contains non-negative integers, +, -, *, /, and spaces. Division truncates toward zero. No parentheses.",
+  "test_cases": [
+    { "inputs": [{ "s": "3+2*2" }], "outputs": [7] },
+    { "inputs": [{ "s": " 3/2 " }], "outputs": [1] },
+    { "inputs": [{ "s": " 3+5 / 2 " }], "outputs": [5] },
+    { "inputs": [{ "s": "14-3/2" }], "outputs": [13] },
+    { "inputs": [{ "s": "0-2147483647" }], "outputs": [-2147483647] }
+  ]
+},
+{
+  "prompt": "Given the root of a binary tree, return the zigzag level order traversal of its nodes' values (first level left->right, next level right->left, and so on).",
+  "test_cases": [
+    { "inputs": [{ "root": [3,9,20,null,null,15,7] }], "outputs": [[[3],[20,9],[15,7]]] },
+    { "inputs": [{ "root": [1] }], "outputs": [[[1]]] },
+    { "inputs": [{ "root": [] }], "outputs": [[]] },
+    { "inputs": [{ "root": [1,2,3,4,null,null,5] }], "outputs": [[[1],[3,2],[4,5]]] }
+  ]
+},
+{
+  "prompt": "Given a string s and a dictionary of strings wordDict, return true if s can be segmented into a space-separated sequence of one or more dictionary words.",
+  "test_cases": [
+    { "inputs": [{ "s": "leetcode", "wordDict": ["leet","code"] }], "outputs": [true] },
+    { "inputs": [{ "s": "applepenapple", "wordDict": ["apple","pen"] }], "outputs": [true] },
+    { "inputs": [{ "s": "catsandog", "wordDict": ["cats","dog","sand","and","cat"] }], "outputs": [false] },
+    { "inputs": [{ "s": "cars", "wordDict": ["car","ca","rs"] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "There are numCourses courses labeled 0..numCourses-1 with prerequisites[i] = [a,b] meaning take b before a. Return a possible order to finish all courses, or [] if impossible.",
+  "test_cases": [
+    { "inputs": [{ "numCourses": 2, "prerequisites": [[1,0]] }], "outputs": [[0,1]] },
+    { "inputs": [{ "numCourses": 4, "prerequisites": [[1,0],[2,0],[3,1],[3,2]] }], "outputs": [[0,1,2,3],[0,2,1,3]] },
+    { "inputs": [{ "numCourses": 2, "prerequisites": [[1,0],[0,1]] }], "outputs": [[]] }
+  ]
+},
+{
+  "prompt": "Given the head of a singly linked list, reorder it as L0 → Ln → L1 → Ln-1 → L2 → Ln-2 → … (in-place, by relinking nodes). Return the final list.",
+  "test_cases": [
+    { "inputs": [{ "head": [1,2,3,4] }], "outputs": [[1,4,2,3]] },
+    { "inputs": [{ "head": [1,2,3,4,5] }], "outputs": [[1,5,2,4,3]] },
+    { "inputs": [{ "head": [1] }], "outputs": [[1]] },
+    { "inputs": [{ "head": [1,2,3] }], "outputs": [[1,3,2]] }
+  ]
+},
+{
+  "prompt": "You are given a list of tasks represented by capital letters and a non-negative integer n representing the cooldown period. Each same task must be separated by at least n intervals (which can be idle or other tasks). Return the least number of intervals needed to finish all tasks.",
+  "test_cases": [
+    { "inputs": [{ "tasks": ["A","A","A","B","B","B"], "n": 2 }], "outputs": [8] },
+    { "inputs": [{ "tasks": ["A","A","A","B","B","B"], "n": 0 }], "outputs": [6] },
+    { "inputs": [{ "tasks": ["A","C","A","B","D","B"], "n": 1 }], "outputs": [6] },
+    { "inputs": [{ "tasks": ["A","A","A","A","B","C","D","E","F","G"], "n": 2 }], "outputs": [10] }
+  ]
+},
+{
+  "prompt": "Given the head of a linked list and an integer x, partition the list so that all nodes < x come before nodes >= x, preserving the original relative order within each partition. Return the final list.",
+  "test_cases": [
+    { "inputs": [{ "head": [1,4,3,2,5,2], "x": 3 }], "outputs": [[1,2,2,4,3,5]] },
+    { "inputs": [{ "head": [2,1], "x": 2 }], "outputs": [[1,2]] },
+    { "inputs": [{ "head": [1,4,2,10,2,5], "x": 3 }], "outputs": [[1,2,2,4,10,5]] },
+    { "inputs": [{ "head": [1,1], "x": 2 }], "outputs": [[1,1]] }
+  ]
+},
+{
+  "prompt": "Given an m x n matrix, return all elements of the matrix in spiral order (clockwise from top-left).",
+  "test_cases": [
+    {
+      "inputs": [{
+        "matrix": [
+          [1,2,3],
+          [4,5,6],
+          [7,8,9]
+        ]
+      }],
+      "outputs": [[1,2,3,6,9,8,7,4,5]]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [1,2,3,4],
+          [5,6,7,8],
+          [9,10,11,12]
+        ]
+      }],
+      "outputs": [[1,2,3,4,8,12,11,10,9,5,6,7]]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [1,2],
+          [3,4]
+        ]
+      }],
+      "outputs": [[1,2,4,3]]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [1],
+          [2],
+          [3],
+          [4]
+        ]
+      }],
+      "outputs": [[1,2,3,4]]
+    }
+  ]
+},
+{
+  "prompt": "There are n gas stations arranged in a circle, with gas[i] gas at station i and cost[i] gas needed to travel from i to (i+1) mod n. If you can travel around once, return the starting station index; otherwise return -1. If a solution exists, it is unique.",
+  "test_cases": [
+    { "inputs": [{ "gas": [1,2,3,4,5], "cost": [3,4,5,1,2] }], "outputs": [3] },
+    { "inputs": [{ "gas": [2,3,4], "cost": [3,4,3] }], "outputs": [-1] },
+    { "inputs": [{ "gas": [5,1,2,3,4], "cost": [4,4,1,5,1] }], "outputs": [4] },
+    { "inputs": [{ "gas": [2], "cost": [2] }], "outputs": [0] }
+  ]
+},
+{
+  "prompt": "Given two sorted arrays nums1 and nums2 of sizes m and n, return the median of the two sorted arrays. Overall runtime should be O(log(m+n)).",
+  "test_cases": [
+    { "inputs": [{ "nums1": [1,3], "nums2": [2] }], "outputs": [2.0] },
+    { "inputs": [{ "nums1": [1,2], "nums2": [3,4] }], "outputs": [2.5] },
+    { "inputs": [{ "nums1": [], "nums2": [1] }], "outputs": [1.0] },
+    { "inputs": [{ "nums1": [0,0], "nums2": [0,0] }], "outputs": [0.0] }
+  ]
+},
+{
+  "prompt": "You are given an array of k linked-lists, each sorted in ascending order. Merge all the linked-lists into one sorted linked-list and return it.",
+  "test_cases": [
+    { "inputs": [{ "lists": [[1,4,5],[1,3,4],[2,6]] }], "outputs": [[1,1,2,3,4,4,5,6]] },
+    { "inputs": [{ "lists": [] }], "outputs": [[]] },
+    { "inputs": [{ "lists": [[]] }], "outputs": [[]] },
+    { "inputs": [{ "lists": [[-10,-5,0],[],[2,2,2]] }], "outputs": [[-10,-5,0,2,2,2]] }
+  ]
+},
+{
+  "prompt": "Implement regular expression matching with support for '.' and '*'. '.' matches any single character. '*' matches zero or more of the preceding element. Matching should cover the entire input string (not partial).",
+  "test_cases": [
+    { "inputs": [{ "s": "aa", "p": "a" }], "outputs": [false] },
+    { "inputs": [{ "s": "aa", "p": "a*" }], "outputs": [true] },
+    { "inputs": [{ "s": "ab", "p": ".*" }], "outputs": [true] },
+    { "inputs": [{ "s": "aab", "p": "c*a*b" }], "outputs": [true] },
+    { "inputs": [{ "s": "mississippi", "p": "mis*is*p*." }], "outputs": [false] }
+  ]
+},
+{
+  "prompt": "Given an unsorted integer array nums, return the smallest missing positive integer. Run in O(n) time and use constant extra space.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,2,0] }], "outputs": [3] },
+    { "inputs": [{ "nums": [3,4,-1,1] }], "outputs": [2] },
+    { "inputs": [{ "nums": [7,8,9,11,12] }], "outputs": [1] },
+    { "inputs": [{ "nums": [1,1] }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.",
+  "test_cases": [
+    { "inputs": [{ "height": [0,1,0,2,1,0,1,3,2,1,2,1] }], "outputs": [6] },
+    { "inputs": [{ "height": [4,2,0,3,2,5] }], "outputs": [9] },
+    { "inputs": [{ "height": [2,0,2] }], "outputs": [2] },
+    { "inputs": [{ "height": [3,0,1,3] }], "outputs": [5] }
+  ]
+},
+{
+  "prompt": "Given two strings word1 and word2, return the minimum number of operations (insert, delete, replace) required to convert word1 into word2.",
+  "test_cases": [
+    { "inputs": [{ "word1": "horse", "word2": "ros" }], "outputs": [3] },
+    { "inputs": [{ "word1": "intention", "word2": "execution" }], "outputs": [5] },
+    { "inputs": [{ "word1": "", "word2": "" }], "outputs": [0] },
+    { "inputs": [{ "word1": "", "word2": "a" }], "outputs": [1] },
+    { "inputs": [{ "word1": "ab", "word2": "yabd" }], "outputs": [2] }
+  ]
+},
+{
+  "prompt": "Given strings s and t, return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If there is no such substring, return an empty string.",
+  "test_cases": [
+    { "inputs": [{ "s": "ADOBECODEBANC", "t": "ABC" }], "outputs": ["BANC"] },
+    { "inputs": [{ "s": "a", "t": "a" }], "outputs": ["a"] },
+    { "inputs": [{ "s": "a", "t": "aa" }], "outputs": [""] },
+    { "inputs": [{ "s": "ab", "t": "b" }], "outputs": ["b"] },
+    { "inputs": [{ "s": "aa", "t": "aa" }], "outputs": ["aa"] }
+  ]
+},
+{
+  "prompt": "You are given an integer array nums and an integer k. There is a sliding window of size k moving from left to right across the array. Return an array of the maximum values in each window.",
+  "test_cases": [
+    { "inputs": [{ "nums": [1,3,-1,-3,5,3,6,7], "k": 3 }], "outputs": [[3,3,5,5,6,7]] },
+    { "inputs": [{ "nums": [1], "k": 1 }], "outputs": [[1]] },
+    { "inputs": [{ "nums": [9,10,9,-7,-4,-8,2,-6], "k": 5 }], "outputs": [[10,10,9,2]] },
+    { "inputs": [{ "nums": [4,3,11], "k": 2 }], "outputs": [[4,11]] }
+  ]
+},
+{
+  "prompt": "Given a string s consisting of '(' and ')', return the length of the longest valid (well-formed) parentheses substring.",
+  "test_cases": [
+    { "inputs": [{ "s": "(()" }], "outputs": [2] },
+    { "inputs": [{ "s": ")()())" }], "outputs": [4] },
+    { "inputs": [{ "s": "" }], "outputs": [0] },
+    { "inputs": [{ "s": "()(()" }], "outputs": [2] },
+    { "inputs": [{ "s": "()(())" }], "outputs": [6] }
+  ]
+},
+{
+  "prompt": "Place n queens on an n x n chessboard so that no two queens attack each other. Return all distinct solutions as arrays of strings with 'Q' for a queen and '.' for empty.",
+  "test_cases": [
+    {
+      "inputs": [{ "n": 4 }],
+      "outputs": [
+        [
+          [".Q..","...Q","Q...","..Q."],
+          ["..Q.","Q...","...Q",".Q.."]
+        ],
+        [
+          ["..Q.","Q...","...Q",".Q.."],
+          [".Q..","...Q","Q...","..Q."]
+        ]
+      ]
+    },
+    { "inputs": [{ "n": 1 }], "outputs": [[["Q"]]] },
+    { "inputs": [{ "n": 2 }], "outputs": [[]] }
+  ]
+},
+{
+  "prompt": "Return the number of distinct solutions to the n-queens puzzle (place n queens on an n x n board so none attack each other).",
+  "test_cases": [
+    { "inputs": [{ "n": 4 }], "outputs": [2] },
+    { "inputs": [{ "n": 1 }], "outputs": [1] },
+    { "inputs": [{ "n": 5 }], "outputs": [10] }
+  ]
+},
+{
+  "prompt": "Given beginWord, endWord, and a wordList, return all the shortest transformation sequences from beginWord to endWord. Only one letter can be changed at a time and each intermediate word must exist in wordList.",
+  "test_cases": [
+    {
+      "inputs": [{ "beginWord": "hit", "endWord": "cog", "wordList": ["hot","dot","dog","lot","log","cog"] }],
+      "outputs": [
+        [["hit","hot","dot","dog","cog"],["hit","hot","lot","log","cog"]],
+        [["hit","hot","lot","log","cog"],["hit","hot","dot","dog","cog"]]
+      ]
+    },
+    {
+      "inputs": [{ "beginWord": "hit", "endWord": "cog", "wordList": ["hot","dot","dog","lot","log"] }],
+      "outputs": [[]]
+    }
+  ]
+},
+{
+  "prompt": "Given an m x n board of letters and a list of words, return all words that can be formed by tracing adjacent (up/down/left/right) cells. A cell may not be reused within the same word.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "board": [
+          ["o","a","a","n"],
+          ["e","t","a","e"],
+          ["i","h","k","r"],
+          ["i","f","l","v"]
+        ],
+        "words": ["oath","pea","eat","rain"]
+      }],
+      "outputs": [["eat","oath"],["oath","eat"]]
+    },
+    {
+      "inputs": [{
+        "board": [
+          ["a","b"],
+          ["c","d"]
+        ],
+        "words": ["abcb"]
+      }],
+      "outputs": [[]]
+    }
+  ]
+},
+{
+  "prompt": "You are given n balloons, each with a number nums[i]. When you burst balloon i, you gain nums[left] * nums[i] * nums[right] coins where left and right are adjacent balloons (treat out-of-bounds as 1). Return the maximum coins you can collect.",
+  "test_cases": [
+    { "inputs": [{ "nums": [3,1,5,8] }], "outputs": [167] },
+    { "inputs": [{ "nums": [1,5] }], "outputs": [10] },
+    { "inputs": [{ "nums": [7] }], "outputs": [7] }
+  ]
+},
+{
+  "prompt": "Given an m x n integer matrix, return the length of the longest strictly increasing path. From each cell you may move up, down, left, or right.",
+  "test_cases": [
+    {
+      "inputs": [{
+        "matrix": [
+          [9,9,4],
+          [6,6,8],
+          [2,1,1]
+        ]
+      }],
+      "outputs": [4]
+    },
+    {
+      "inputs": [{
+        "matrix": [
+          [3,4,5],
+          [3,2,6],
+          [2,2,1]
+        ]
+      }],
+      "outputs": [4]
+    }
+  ]
+},
+{
+  "prompt": "Design an algorithm to serialize a binary tree to a string and deserialize the string back to the original tree. Implement Codec with serialize(root) and deserialize(data).",
+  "test_cases": [
+    {
+      "inputs": [{
+        "ops": ["Codec","serialize","deserialize","serialize"],
+        "args": [[], [[1,2,3,null,null,4,5]], ["[1,2,3,null,null,4,5]"], []]
+      }],
+      "outputs": [null,"[1,2,3,null,null,4,5]",[1,2,3,null,null,4,5],"[1,2,3,null,null,4,5]"]
+    },
+    {
+      "inputs": [{
+        "ops": ["Codec","serialize","deserialize","serialize"],
+        "args": [[], [[]], ["[]"], []]
+      }],
+      "outputs": [null,"[]",[],"[]"]
+    }
+  ]
+},
+{
+  "prompt": "Given the root of a binary tree, return the maximum path sum. A path may start and end at any nodes and must contain at least one node.",
+  "test_cases": [
+    { "inputs": [{ "root": [1,2,3] }], "outputs": [6] },
+    { "inputs": [{ "root": [-10,9,20,null,null,15,7] }], "outputs": [42] },
+    { "inputs": [{ "root": [2,-1] }], "outputs": [2] },
+    { "inputs": [{ "root": [-3] }], "outputs": [-3] }
+  ]
+},
+{
+  "prompt": "Given a list of unique words, return all unique pairs of indices (i, j) such that words[i] + words[j] is a palindrome.",
+  "test_cases": [
+    {
+      "inputs": [{ "words": ["abcd","dcba","lls","s","sssll"] }],
+      "outputs": [
+        [[0,1],[1,0],[3,2],[2,4]],
+        [[1,0],[0,1],[2,4],[3,2]]
+      ]
+    },
+    {
+      "inputs": [{ "words": ["bat","tab","cat"] }],
+      "outputs": [
+        [[0,1],[1,0]],
+        [[1,0],[0,1]]
+      ]
+    },
+    {
+      "inputs": [{ "words": ["a",""] }],
+      "outputs": [
+        [[0,1],[1,0]],
+        [[1,0],[0,1]]
+      ]
+    }
+  ]
+},
+{
+  "prompt": "A frog starts on stone 0 and wants to reach the last stone. Given sorted positions stones, the first jump must be 1. If the last jump was k, the next jump must be k-1, k, or k+1. Return true if the frog can reach the last stone.",
+  "test_cases": [
+    { "inputs": [{ "stones": [0,1,3,5,6,8,12,17] }], "outputs": [true] },
+    { "inputs": [{ "stones": [0,1,2,3,4,8,9,11] }], "outputs": [false] },
+    { "inputs": [{ "stones": [0,1] }], "outputs": [true] }
+  ]
+},
+{
+  "prompt": "Given an array heights representing bar heights where each bar has width 1, return the area of the largest rectangle in the histogram.",
+  "test_cases": [
+    { "inputs": [{ "heights": [2,1,5,6,2,3] }], "outputs": [10] },
+    { "inputs": [{ "heights": [2,4] }], "outputs": [4] },
+    { "inputs": [{ "heights": [1] }], "outputs": [1] },
+    { "inputs": [{ "heights": [2,1,2] }], "outputs": [3] }
+  ]
+}
+]
