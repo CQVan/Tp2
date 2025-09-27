@@ -6,37 +6,46 @@ from fastapi.responses import JSONResponse
 from fastapi import status
 from collections import deque
 import math
+import hashlib
+from playerdb import get_player, create_player, update_player, Player
 
 app = FastAPI()
 
-# --- Dummy in-memory user store for login/register (replace with DB later) ---
-users = {}  # {userid: {"password": ..., "elo": ...}}
+# --- Password hashing helpers ---
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 # --- WebSockets Endpoints (Corrected) ---
 
 # --- REST Endpoints ---
-@app.post("/login")
+
+@app.post("/auth/login")
 async def login(request: Request):
     data = await request.json()
     userid = data.get("userid")
     password = data.get("password")
     if not userid or not password:
         return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
-    user = users.get(userid)
-    if not user or user["password"] != password:
+    player = get_player(userid)
+    if not player or not hasattr(player, "password_hash"):
         return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
-    return {"success": True, "userid": userid, "elo": user["elo"]}
+    if player.password_hash != hash_password(password):
+        return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
+    return {"success": True, "userid": userid, "elo": player.elo}
 
-@app.post("/register")
+
+@app.post("/auth/register")
 async def register(request: Request):
     data = await request.json()
     userid = data.get("userid")
     password = data.get("password")
     if not userid or not password:
         return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
-    if userid in users:
+    if get_player(userid):
         return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
-    users[userid] = {"password": password, "elo": 1000}
+    player = Player(id=userid, elo=1000, password_hash=hash_password(password))
+    create_player(player)
     return {"success": True, "userid": userid, "elo": 1000}
+
 
 @app.post("/update-elo")
 async def update_elo(request: Request):
@@ -46,15 +55,16 @@ async def update_elo(request: Request):
     win = data.get("win")
     if not userid or sessionid is None or win is None:
         return JSONResponse({"success": False, "error": "Missing parameters."}, status_code=status.HTTP_400_BAD_REQUEST)
-    user = users.get(userid)
-    if not user:
+    player = get_player(userid)
+    if not player:
         return JSONResponse({"success": False, "error": "User not found."}, status_code=status.HTTP_404_NOT_FOUND)
     # Update elo: +20 for win, -20 for loss
     if win:
-        user["elo"] += 20
+        player.elo += 20
     else:
-        user["elo"] -= 20
-    return {"success": True, "userid": userid, "elo": user["elo"]}
+        player.elo -= 20
+    update_player(player)
+    return {"success": True, "userid": userid, "elo": player.elo}
 
 # --- Connection Manager for Broadcasting ---
 class ConnectionManager:
