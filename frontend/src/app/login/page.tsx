@@ -1,87 +1,170 @@
-"use client"; // Needed for client-side form handling
+"use client";
 
 import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-export default function Page(){
-    const [useLogin, setUseLogin] = useState<boolean>(true);
+export default function Page() {
+  const [useLogin, setUseLogin] = useState(true);
 
-    return(
-        <div>
-            {useLogin ? <Login /> : <Register/>}
-            <button onClick={() => setUseLogin(!useLogin)}>{useLogin ? "Create account" : "Already have an account?"}</button>
-        </div>
-    )
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>{useLogin ? "Login" : "Register"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {useLogin ? <LoginForm /> : <RegisterForm />}
+          <Button
+            variant="link"
+            className="mt-4 w-full"
+            onClick={() => setUseLogin(!useLogin)}
+          >
+            {useLogin ? "Create account" : "Already have an account?"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
-export function Login() {
+function LoginForm() {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); // Prevent page reload
+    event.preventDefault();
+    setError(null);
+    setSuccess(null);
 
     const formData = new FormData(event.currentTarget);
-    const username = formData.get("id");
-    const password = formData.get("password");
+    const userid = formData.get("userid") as string;
+    const password = formData.get("password") as string;
 
-    console.log("Username:", username);
-    console.log("Password:", password);
+    if (!userid || !password) {
+      setError("Please enter both username and password.");
+      return;
+    }
 
-    // You can now send data to your API
-    // await fetch("/api/login", { method: "POST", body: JSON.stringify({ username, password }) });
-
-
+    try {
+      const res = await fetch("http://127.0.0.1:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userid, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess("Login successful!");
+        // TODO: Save user info/token, redirect, etc.
+      } else {
+        setError(data.error || "Login failed.");
+      }
+    } catch (e) {
+      setError("Could not connect to server.");
+    }
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <label htmlFor="id">Username:</label>
-      <br />
-      <input type="text" id="id" name="id" />
-      <br />
-      <label htmlFor="password">Password:</label>
-      <br />
-      <input type="password" id="password" name="password" />
-      <br />
-      <input type="submit" value="Login" />
+    <form onSubmit={onSubmit} className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert variant="default">
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+      <div>
+        <Label htmlFor="userid">Username</Label>
+        <Input id="userid" name="userid" type="text" autoComplete="username" />
+      </div>
+      <div>
+        <Label htmlFor="password">Password</Label>
+        <Input id="password" name="password" type="password" autoComplete="current-password" />
+      </div>
+      <Button type="submit" className="w-full">
+        Login
+      </Button>
     </form>
   );
 }
 
-export function Register(){
-    async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); // Prevent page reload
+function RegisterForm() {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSuccess(null);
 
     const formData = new FormData(event.currentTarget);
-    const username = formData.get("id");
-    const password = formData.get("password");
-    const password_confirm = formData.get("password_confirm");
+    const userid = formData.get("userid") as string;
+    const password = formData.get("password") as string;
+    const password_confirm = formData.get("password_confirm") as string;
 
-    if(password !== password){
-        console.log("passwords not the same!");
+    if (!userid || !password || !password_confirm) {
+      setError("Please fill all fields.");
+      return;
+    }
+    if (password !== password_confirm) {
+      setError("Passwords do not match.");
+      return;
     }
 
-    console.log("Username:", username);
-    console.log("Password:", password);
-
-    // You can now send data to your API
-    // await fetch("/api/login", { method: "POST", body: JSON.stringify({ username, password }) });
-
-
+    try {
+      const res = await fetch("http://127.0.0.1:8000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userid, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess("Registration successful! You can now log in.");
+      } else {
+        setError(data.error || "Registration failed.");
+      }
+    } catch (e) {
+      setError("Could not connect to server.");
+    }
   }
 
-    return (
-    <form onSubmit={onSubmit}>
-      <label htmlFor="id">Username:</label>
-      <br />
-      <input type="text" id="id" name="id" />
-      <br />
-      <label htmlFor="password">Password:</label>
-      <br />
-      <input type="password" id="password" name="password" />
-      <br />
-      <label htmlFor="password_confirm">Confirm Password:</label>
-      <br />
-      <input type="password" id="password_confirm" name="password_confirm" />
-      <br />
-      <input type="submit" value="Register" />
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert variant="default">
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+      <div>
+        <Label htmlFor="userid">Username</Label>
+        <Input id="userid" name="userid" type="text" autoComplete="username" />
+      </div>
+      <div>
+        <Label htmlFor="password">Password</Label>
+        <Input id="password" name="password" type="password" autoComplete="new-password" />
+      </div>
+      <div>
+        <Label htmlFor="password_confirm">Confirm Password</Label>
+        <Input id="password_confirm" name="password_confirm" type="password" autoComplete="new-password" />
+      </div>
+      <Button type="submit" className="w-full">
+        Register
+      </Button>
     </form>
   );
 }
