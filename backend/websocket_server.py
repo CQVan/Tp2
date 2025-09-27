@@ -24,12 +24,16 @@ class ConnectionManager:
         self.active_connections[session_id].append(websocket)
         return True
 
-    def disconnect(self, websocket: WebSocket, session_id: str):
+    async def disconnect(self, websocket: WebSocket, session_id: str):
         if session_id in self.active_connections:
             self.active_connections[session_id].remove(websocket)
-            # Clean up empty session
-            if not self.active_connections[session_id]:
-                del self.active_connections[session_id]
+            # If anyone disconnects, close all remaining connections and delete session
+            for ws in list(self.active_connections[session_id]):
+                try:
+                    await ws.close(code=1011, reason="Opponent disconnected. Session closed.")
+                except Exception:
+                    pass
+            del self.active_connections[session_id]
 
     async def broadcast(self, message: str, websocket: WebSocket, session_id: str):
         if session_id in self.active_connections:
@@ -87,9 +91,12 @@ class DynamicMatchmaker:
             del self.ws_map[ws]
 
 
+
 # --- Globals ---
 matchmaker = DynamicMatchmaker()
 manager = ConnectionManager()
+# Track active session IDs
+active_sessions = set()
 
 # --- WebSockets Endpoints (Corrected) ---
 
@@ -105,6 +112,7 @@ async def matchmaking_ws(websocket: WebSocket):
         if match:
             # Use a short, unique session_id (8-10 chars, url-safe)
             session_id = secrets.token_urlsafe(6)
+            active_sessions.add(session_id)
             p1_data, p1_ws = match[0]
             p2_data, p2_ws = match[1]
 
@@ -124,7 +132,10 @@ async def matchmaking_ws(websocket: WebSocket):
 
 @app.websocket("/match/{session_id}")
 async def match_ws(websocket: WebSocket, session_id: str):
-    # Solution: Use a connection manager for robust session handling
+    # Only allow joining if session is active
+    if session_id not in active_sessions:
+        await websocket.close(code=4000, reason="Session expired or does not exist.")
+        return
     is_connected = await manager.connect(websocket, session_id)
     if not is_connected:
         return # Session was full
@@ -134,4 +145,7 @@ async def match_ws(websocket: WebSocket, session_id: str):
             data = await websocket.receive_text()
             await manager.broadcast(data, websocket, session_id)
     except WebSocketDisconnect:
-        manager.disconnect(websocket, session_id)
+        await manager.disconnect(websocket, session_id)
+        # Remove session from active_sessions if destroyed
+        if session_id not in manager.active_connections:
+            active_sessions.discard(session_id)
