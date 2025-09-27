@@ -88,7 +88,7 @@ async def register(request: Request):
 
     if get_player(userid):
         return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
-    player = Player(id=userid, elo=1000, password_hash=hash_password(password))
+    player = Player(id=userid, elo=config.get_config("starting_elo"), password_hash=hash_password(password))
     create_player(player)
 
     # Create JWT token

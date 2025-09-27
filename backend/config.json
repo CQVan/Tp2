@@ -1,6 +1,7 @@
 {
     "max_match_length":  60,
     "bracket_size": 200,
+    "starting_elo": 100,
     
     "jwt_secret": "this is a test secret i promise",
     "jwt_algorithm": "HS256",
