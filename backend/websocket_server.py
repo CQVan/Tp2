@@ -1,11 +1,60 @@
 import uuid
 import secrets
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import JSONResponse
+from fastapi import status
 from collections import deque
 import math
 
 app = FastAPI()
+
+# --- Dummy in-memory user store for login/register (replace with DB later) ---
+users = {}  # {userid: {"password": ..., "elo": ...}}
+# --- WebSockets Endpoints (Corrected) ---
+
+# --- REST Endpoints ---
+@app.post("/login")
+async def login(request: Request):
+    data = await request.json()
+    userid = data.get("userid")
+    password = data.get("password")
+    if not userid or not password:
+        return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
+    user = users.get(userid)
+    if not user or user["password"] != password:
+        return JSONResponse({"success": False, "error": "Invalid credentials."}, status_code=status.HTTP_401_UNAUTHORIZED)
+    return {"success": True, "userid": userid, "elo": user["elo"]}
+
+@app.post("/register")
+async def register(request: Request):
+    data = await request.json()
+    userid = data.get("userid")
+    password = data.get("password")
+    if not userid or not password:
+        return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
+    if userid in users:
+        return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
+    users[userid] = {"password": password, "elo": 1000}
+    return {"success": True, "userid": userid, "elo": 1000}
+
+@app.post("/update-elo")
+async def update_elo(request: Request):
+    data = await request.json()
+    userid = data.get("userid")
+    sessionid = data.get("sessionid")
+    win = data.get("win")
+    if not userid or sessionid is None or win is None:
+        return JSONResponse({"success": False, "error": "Missing parameters."}, status_code=status.HTTP_400_BAD_REQUEST)
+    user = users.get(userid)
+    if not user:
+        return JSONResponse({"success": False, "error": "User not found."}, status_code=status.HTTP_404_NOT_FOUND)
+    # Update elo: +20 for win, -20 for loss
+    if win:
+        user["elo"] += 20
+    else:
+        user["elo"] -= 20
+    return {"success": True, "userid": userid, "elo": user["elo"]}
 
 # --- Connection Manager for Broadcasting ---
 class ConnectionManager:
