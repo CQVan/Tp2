@@ -21,11 +21,11 @@ abstract class Compiler {
      * @param args - Optional arguments to pass to the code.
      * @returns An object of type `any`.
      */
-    abstract run(code: string, func : string, args?: any[]): Promise<RunResult>;
+    abstract run(code: string, func : string, args?: any): Promise<RunResult>;
 }
 
 class JavaScript extends Compiler {
-  async run(code: string, func: string, args: any[] = []): Promise<RunResult> {
+  async run(code: string, func: string, args: any): Promise<RunResult> {
     return new Promise((resolve) => {
       const worker = new Worker("/js-worker.js");
 
@@ -51,7 +51,7 @@ class JavaScript extends Compiler {
 
 
 class Python extends Compiler {
-    async run(code: string, func: string, args?: any[], timeoutMs = 2000): Promise<RunResult> {
+    async run(code: string, func: string, args?: any): Promise<RunResult> {
         if (typeof window === 'undefined') {
             throw new Error("Python sandbox can only run in the browser (client-side)");
         }
@@ -98,7 +98,7 @@ class Python extends Compiler {
         return Promise.race([
             executeCode(),
             new Promise<RunResult>((resolve) => {
-                setTimeout(() => resolve({ output: null, logs: [...logs, 'Execution timed out'] }), timeoutMs);
+                setTimeout(() => resolve({ output: null, logs: [...logs, 'Execution timed out'] }), 2000);
             })
         ]);
     }
