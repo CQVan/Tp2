@@ -103,6 +103,9 @@ export default function MatchmakingPage() {
         localStorage.setItem("session_id", data.session_id);
         // The WebSocket connection (ws.current) is kept alive for signaling.
         
+        if (ws.current) {
+          ws.current.close();
+        }
         // --------------------------------------------------------------------
         // TODO: The WebRTC handshake logic will be triggered from here.
         // For now, we'll just log it.
