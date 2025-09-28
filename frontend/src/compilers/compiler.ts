@@ -1,8 +1,19 @@
 import IsolatedVM from "isolated-vm";
 
-interface RunResult{
+export interface RunResult{
     output : any;
     logs : string[];
+}
+
+export function get_compiler(language: string): Compiler {
+    switch (language.toLowerCase()) {
+        case 'javascript':
+            return new JavaScript();
+        case 'python':
+            return new Python();
+        default:
+            throw new Error(`Unsupported language: ${language}`);
+    }
 }
 
 abstract class Compiler {
@@ -12,7 +23,7 @@ abstract class Compiler {
      * @param args - Optional arguments to pass to the code.
      * @returns An object of type `any`.
      */
-    abstract run(code: string, func : string,args?: any[]): Promise<RunResult>;
+    abstract run(code: string, func : string, args?: any[]): Promise<RunResult>;
 }
 
 class JavaScript extends Compiler {
