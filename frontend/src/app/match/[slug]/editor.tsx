@@ -513,17 +513,7 @@ export default function MatchPage() {
       }));
     }
 
-    function areArraysEquivalent(arr1: string | any[], arr2: string | any[]) {
-      if (!Array.isArray(arr1) || !Array.isArray(arr2) || arr1.length !== arr2.length) {
-        return false;
-      }
-      // Create sorted copies to compare
-      const sortedArr1 = [...arr1].sort();
-      const sortedArr2 = [...arr2].sort();
-      return JSON.stringify(sortedArr1) === JSON.stringify(sortedArr2);
-    }
-
-    async function run_tests(language: string, user_code: { [x: string]: string; }, question: { test_cases: any[]; target_func: string; }) {
+    async function run_tests(language: string, user_code: { [x: string]: string; }, question: Question) {
       appendTerminal(`--- Running tests for ${language} ---`);
       let passed_count = 0;
       const compiler = get_compiler(language);
@@ -531,8 +521,8 @@ export default function MatchPage() {
 
       for (let i = 0; i < total_cases; i++) {
         const test_case = question.test_cases[i];
-        const inputs = (test_case.inputs ?? test_case.input) as any;
-        const outputsExpected = (test_case.outputs ?? test_case.output) as any;
+        const inputs = test_case.inputs;
+        const outputsExpected = test_case.outputs;
         const inputs_as_array = Array.isArray(inputs) ? inputs : Object.values(inputs ?? {});
 
         appendTerminal("");
@@ -549,7 +539,7 @@ export default function MatchPage() {
           result.logs.forEach((l) => appendTerminal(l));
         }
 
-        const pass = areArraysEquivalent(result.output, outputsExpected);
+        const pass = JSON.stringify(result.output) === JSON.stringify(outputsExpected);
         appendTerminal(
           pass
             ? `✅ Passed | Output: ${JSON.stringify(result.output)}`
