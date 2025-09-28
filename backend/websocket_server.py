@@ -1,18 +1,14 @@
 # --- All your existing imports ---
 import hashlib
 import jwt
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from datetime import datetime, timedelta, timezone
-import secrets
-import asyncio
+from datetime import datetime, timedelta
 from collections import deque
 import math
 from playerdb import get_player, create_player, update_player, Player
-import httpx
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
-from fastapi import FastAPI, Query, WebSocket, Request, WebSocketDisconnect, status, Depends, HTTPException
+from fastapi import FastAPI, Query, WebSocket, Request, WebSocketDisconnect, status, Depends
 from fastapi.responses import JSONResponse
 
 # --- Config Manager (restored from previous version) ---
@@ -54,9 +50,9 @@ def decode_token(token: str):
     try:
         payload = jwt.decode(token, config.get_config("jwt_secret"), algorithms=[config.get_config("jwt_algorithm")])
         return {"valid": True, "data": payload}
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         return {"valid": False, "error": "Token has expired."}
-    except InvalidTokenError:
+    except jwt.InvalidTokenError:
         return {"valid": False, "error": "Invalid token."}
 
 # --- MODIFIED REST Endpoints ---
