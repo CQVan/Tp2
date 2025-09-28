@@ -9,6 +9,7 @@ import { get_compiler, RunResult } from "@/compilers/compiler";
 interface Question {
   title: string;
   prompt: string;
+  initial_code: {language: string, code: string};
   difficulty: string;
   target_func: string;
   test_cases: { inputs: any; outputs: any; }[];
@@ -283,8 +284,9 @@ export default function MatchPage() {
           if (data.event === 'chat') {
             setMessages((prevMessages) => [...prevMessages, data]);
           } else if (data.event === 'question_data') {
-            console.log(data.payload as Question);
             setQuestion(data.payload as Question);
+            setCode(question?.initial_code ?? {});
+            console.log(data.payload as Question);
           } else if (data.event === 'give_up') {
             // Opponent has given up; navigate back to matchmaking
             setConnectionStatus('Opponent left the match. Returning to matchmaking...');
@@ -356,6 +358,7 @@ export default function MatchPage() {
         
         if (data.success && data.question) {
           setQuestion(data.question);
+          setCode(question?.initial_code ?? {});
           
           // If we're the offerer, share the question with the opponent
           if (dataChannel.current?.readyState === 'open') {
@@ -416,6 +419,8 @@ export default function MatchPage() {
       for(let i = 0 ; i < (amt ?? question?.test_cases.length); i++){
         const inputs = question.test_cases[i].inputs;  
         const result : RunResult = await compiler.run(code[language], question.target_func, inputs);
+
+        setTerminalLines(result.logs);
         if(!result.output){ // error in code
           return {}
         }
@@ -452,13 +457,13 @@ export default function MatchPage() {
                               <div className="mb-2">
                                 <span className="text-gray-400">Input:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{testCase.inputs}</code>
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs)}</code>
                                 </pre>
                               </div>
                               <div>
                                 <span className="text-gray-400">Output:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{testCase.outputs}</code>
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs)}</code>
                                 </pre>
                               </div>
                             </div>
