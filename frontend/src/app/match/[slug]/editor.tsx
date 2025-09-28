@@ -10,7 +10,8 @@ interface Question {
   title: string;
   prompt: string;
   difficulty: string;
-  test_cases: { input: string; output: string; }[];
+  target_func: string;
+  test_cases: { inputs: any; outputs: any; }[];
 }
 
 function getUserIdFromToken(token: string): string | null {
@@ -337,11 +338,12 @@ export default function MatchPage() {
     }
 
     async function run_cases(amt : number | undefined = undefined){
+      if(!question) throw "missing question"
       const compiler = get_compiler(language);
       
-      for(let i = 0 ; i < (amt ?? 0 /** replace 0 with all test cases*/); i++){
-        // load test case of index here
-        const result : RunResult = await compiler.run(code[language], "func here", ["args here"]);
+      for(let i = 0 ; i < (amt ?? question?.test_cases.length); i++){
+        const inputs = question.test_cases[i].inputs;  
+        const result : RunResult = await compiler.run(code[language], question.target_func, inputs);
         if(!result.output) {/** fail the test*/ return; }
 
         // show test passed
