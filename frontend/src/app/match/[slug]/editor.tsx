@@ -513,11 +513,11 @@ export default function MatchPage() {
       }));
     }
 
-    async function run_tests(language: string, user_code: { [x: string]: string; }, question: Question) {
+    async function run_tests(question: Question, amt : number | undefined = undefined) {
       appendTerminal(`--- Running tests for ${language} ---`);
       let passed_count = 0;
       const compiler = get_compiler(language);
-      const total_cases = question.test_cases.length;
+      const total_cases = amt ?? question.test_cases.length;
 
       for (let i = 0; i < total_cases; i++) {
         const test_case = question.test_cases[i];
@@ -529,7 +529,7 @@ export default function MatchPage() {
         appendTerminal(`Case ${i + 1}/${total_cases} - Inputs: ${JSON.stringify(inputs_as_array)}`);
 
         const result = await compiler.run(
-          user_code[language],
+          code[language],
           question.target_func,
           inputs_as_array
         );
@@ -552,6 +552,31 @@ export default function MatchPage() {
       appendTerminal(`--- Results: Passed ${passed_count}/${total_cases} ---`);
       return { passed_count, total_cases };
     }
+
+    async function on_submit_code(){
+      if(!question) return;
+      try {
+        appendTerminal(`Running tests for ${language}...`);
+        const res = await run_tests(question);
+        appendTerminal(`Results: Passed ${res.passed_count}/${res.total_cases}`);
+        if(res.passed_count < res.total_cases) return;
+      } catch (e) {
+        appendTerminal(`Test run failed: ${String(e)}`);
+        return;
+      }
+
+      if (!currentUser || !matchStartTime || !sessionId) return;
+      const timeTakenMs = Date.now() - matchStartTime;
+      const payload = { userid: currentUser.userid, sessionid: sessionId, timeTakenMs };
+      appendTerminal(`You submitted at ${timeTakenMs} ms`);
+      // Send to opponent
+      try { dataChannel.current?.send(JSON.stringify({ event: 'submit', payload })); } catch {}
+      // If we're the offerer, decide immediately
+      if (role === 'offerer' && !resultFinalizedRef.current) {
+        decideWinnerFirstSubmit(payload);
+      }
+    }
+
     return (
         <div className="flex h-screen bg-gray-900">
           {/* Left Panel: Problem Description */}
@@ -609,7 +634,7 @@ export default function MatchPage() {
                   if (!question) return;
                   try {
                     appendTerminal(`Running tests for ${language}...`);
-                    const res = await run_tests(language, code, question);
+                    const res = await run_tests(question, 2);
                     appendTerminal(`Results: Passed ${res.passed_count}/${res.total_cases}`);
                   } catch (e) {
                     appendTerminal(`Test run failed: ${String(e)}`);
@@ -620,18 +645,7 @@ export default function MatchPage() {
                 Test
               </button>
               <button
-                onClick={() => {
-                  if (!currentUser || !matchStartTime || !sessionId) return;
-                  const timeTakenMs = Date.now() - matchStartTime;
-                  const payload = { userid: currentUser.userid, sessionid: sessionId, timeTakenMs };
-                  appendTerminal(`You submitted at ${timeTakenMs} ms`);
-                  // Send to opponent
-                  try { dataChannel.current?.send(JSON.stringify({ event: 'submit', payload })); } catch {}
-                  // If we're the offerer, decide immediately
-                  if (role === 'offerer' && !resultFinalizedRef.current) {
-                    decideWinnerFirstSubmit(payload);
-                  }
-                }}
+                onClick={() => on_submit_code()}
                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
               >
                 Submit
