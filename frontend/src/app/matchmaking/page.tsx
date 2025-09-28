@@ -82,17 +82,21 @@ export default function MatchmakingPage() {
     setIsQueueing(true);
     setStatus("Connecting...");
 
-    const isSecure = window.location.protocol === 'https:';
-    const protocol = isSecure ? 'wss://' : 'ws://';
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/^(http|https):\/\//, '');
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const wsUrl = process.env.NEXT_PUBLIC_WSS_URL;
+    if (!wsUrl) {
+      setError("WebSocket URL is not configured.");
+      setIsQueueing(false);
+      return;
+    }
 
     if (!backendUrl) {
-        setError("Backend URL is not configured.");
-        setIsQueueing(false);
-        return;
+      setError("Backend URL is not configured.");
+      setIsQueueing(false);
+      return;
     }
-    
-    ws.current = new WebSocket(`${protocol}${backendUrl}/ws`);
+
+    ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
       setStatus("In queue, waiting for an opponent...");

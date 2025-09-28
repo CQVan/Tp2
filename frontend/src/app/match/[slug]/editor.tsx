@@ -117,7 +117,11 @@ export default function MatchPage() {
     setCurrentUser({ userid: getUserIdFromToken(token)! });
 
     // Connect to WebSocket using environment variable
-    const wsUrl = process.env.NEXT_PUBLIC_WSS_URL || 'ws://127.0.0.1:8000/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WSS_URL;
+    if (!wsUrl) {
+      setConnectionStatus("Error: WebSocket URL is not defined.");
+      return;
+    }
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
@@ -308,7 +312,7 @@ export default function MatchPage() {
       if (!sessionId) return;
   
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/question?sessionid=${sessionId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/question?sessionid=${sessionId}`);
         const data = await response.json();
         
         if (data.success && data.question) {
