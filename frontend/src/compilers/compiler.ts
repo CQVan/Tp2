@@ -14,3 +14,10 @@ class JavaScript extends Compiler{
     }
     
 }
+
+class Python extends Compiler{
+    run(code: string, args?: any[]) {
+        
+    }
+
+}
