@@ -9,7 +9,7 @@ import { get_compiler, RunResult } from "@/compilers/compiler";
 interface Question {
   title: string;
   prompt: string;
-  initial_code: {language: string, code: string};
+  initial_code: Record<string, string>;
   difficulty: string;
   target_func: string;
   test_cases: { inputs: any; outputs: any; }[];
