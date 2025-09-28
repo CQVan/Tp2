@@ -263,15 +263,19 @@ async def websocket_endpoint(websocket: WebSocket):
         if match:
             # 3. MATCH FOUND
             (p1, ws1), (p2, ws2) = match
+
+            session_id = secrets.token_urlsafe(8)
             
             await ws1.send_json({
                 "event": "match_found",
+                "session_id": session_id,
                 "opponent": {"id": p2.id, "elo": int(p2.elo)},
                 "role": "offerer"
             })
             
             await ws2.send_json({
                 "event": "match_found",
+                "session_id": session_id,
                 "opponent": {"id": p1.id, "elo": int(p1.elo)},
                 "role": "answerer"
             })
