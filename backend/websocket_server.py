@@ -1,5 +1,6 @@
 # --- All your existing imports ---
 import hashlib
+import secrets
 import jwt
 from datetime import datetime, timedelta
 from collections import deque

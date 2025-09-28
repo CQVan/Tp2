@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Editor, { OnMount } from "@monaco-editor/react";
+import { get_compiler, RunResult } from "@/compilers/compiler";
 
 function getUserIdFromToken(token: string): string | null {
   try {
@@ -70,7 +71,8 @@ export default function MatchPage() {
   const router = useRouter();
     // UI and Editor state
     const [sidebarWidth, setSidebarWidth] = useState(400);
-    const [code, setCode] = useState<string>("// Your code here!");
+    const [code, setCode] = useState<Record<string,string>>({});
+    const [language, setLanguage] = useState<string>("javascript");
     const editorRef = useRef<any>(null);
 
     // NEW: State for current user and chat messages
@@ -283,6 +285,25 @@ export default function MatchPage() {
     const handleEditorMount: OnMount = (editor) => { editorRef.current = editor; };
     useEffect(() => { editorRef.current?.layout(); }, [sidebarWidth]);
 
+    function update_code(value : string | undefined){
+      setCode(prev => ({
+        ...prev,       // keep existing keys
+        [language]: value ?? "",  // update the specific key
+      }));
+    }
+
+    async function run_cases(amt : number | undefined = undefined){
+      const compiler = get_compiler(language);
+      
+      for(let i = 0 ; i < (amt ?? 0 /** replace 0 with all test cases*/); i++){
+        // load test case of index here
+        const result : RunResult = await compiler.run(code[language], "func here", ["args here"]);
+        if(!result.output) {/** fail the test*/ return; }
+
+        // show test passed
+      }
+    }
+
     return (
         <div className="flex h-screen bg-gray-900">
           {/* Left Panel: Problem Description */}
@@ -300,15 +321,20 @@ export default function MatchPage() {
           <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${sidebarWidth}px - 350px)` }}>
             <div className="p-2 bg-gray-800 text-center text-white font-bold">{connectionStatus}</div>
             <div className="flex gap-2 p-2 bg-gray-800 justify-end">
+              <select>
+                <option value={"javascript"}>JavaScript</option>
+                <option value={"python"}>Python</option>
+              </select>
+              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Test</button>
               <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Submit</button>
               <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
             </div>
             <Editor
               height="100%"
-              language={"javascript"}
+              language={language}
               theme="vs-dark"
-              value={code}
-              onChange={(value) => setCode(value || "")}
+              value={code[language]}
+              onChange={(value) => update_code(value)}
               onMount={(editor) => { editorRef.current = editor; }}
             />
           </div>
