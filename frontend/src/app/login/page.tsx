@@ -55,15 +55,31 @@ function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userid, password }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        setError(errData.error || `Error: ${res.statusText}`);
+        return;
+      }
+      
       const data = await res.json();
-      if (data.success) {
-        setSuccess("Login successful!");
-        // TODO: Save user info/token, redirect, etc.
+
+      if (data.success && data.token) {
+        setSuccess("Login successful! Redirecting...");
+
+        // Store the JWT in localStorage
+        localStorage.setItem("authToken", data.token);
+
+        // Redirect to the matchmaking page after a short delay
+        setTimeout(() => {
+          window.location.href = '/matchmaking';
+        }, 1000);
+
       } else {
-        setError(data.error || "Login failed.");
+        setError(data.error || "Login failed. No token received.");
       }
     } catch (e) {
-      setError("Could not connect to server.");
+      setError("Could not connect to the server.");
     }
   }
 
@@ -125,6 +141,13 @@ function RegisterForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userid, password }),
       });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        setError(errData.error || `Error: ${res.statusText}`);
+        return;
+      }
+      
       const data = await res.json();
       if (data.success) {
         setSuccess("Registration successful! You can now log in.");
@@ -168,3 +191,4 @@ function RegisterForm() {
     </form>
   );
 }
+

@@ -1,35 +1,55 @@
-import uuid
+# --- All your existing imports ---
+import hashlib
+import jwt
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from datetime import datetime, timedelta, timezone
 import secrets
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import JSONResponse
-from fastapi import status
 from collections import deque
 import math
-import hashlib
 from playerdb import get_player, create_player, update_player, Player
 import httpx
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
-import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
-from datetime import datetime, timedelta
+from fastapi import FastAPI, Query, WebSocket, Request, status, Depends, HTTPException
+from fastapi.responses import JSONResponse
+
+# --- Config Manager (restored from previous version) ---
+class ConfigManager:
+    def __init__(self, file_path="config.json"):
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                self._config = json.load(f)
+        else:
+            # Default config if file doesn't exist
+            self._config = {
+                "starting_elo": 1000,
+                "bracket_size": 200,
+                "jwt_secret": "your-super-secret-key-change-me",
+                "jwt_algorithm": "HS256",
+                "jwt_expire_time": 30
+            }
+    def get_config(self, item: str):
+        return self._config.get(item)
+
+config = ConfigManager()
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or specify your frontend URL(s)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Authentication helpers ---
+# --- SHA256 Password Hashing Helper ---
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
+# --- JWT Token Decoding Helper (restored from previous version) ---
 def decode_token(token: str):
     try:
         payload = jwt.decode(token, config.get_config("jwt_secret"), algorithms=[config.get_config("jwt_algorithm")])
@@ -39,40 +59,24 @@ def decode_token(token: str):
     except InvalidTokenError:
         return {"valid": False, "error": "Invalid token."}
 
-# --- REST Endpoints ---
+# --- MODIFIED REST Endpoints ---
 
 @app.post("/auth/login")
 async def login(request: Request):
     data = await request.json()
     userid = data.get("userid")
     password = data.get("password")
-
-    if not userid or not password:
-        return JSONResponse(
-            {"success": False, "error": "Missing userid or password."},
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
-
-    player = get_player(userid)
     
-    if not player or not hasattr(player, "password_hash"):
+    player = get_player(userid)
+    if not player or player.password_hash != hash_password(password):
         return JSONResponse(
             {"success": False, "error": "Invalid credentials."},
-            status_code=status.HTTP_401_UNAUTHORIZED
-        )
-
-    if player.password_hash != hash_password(password):
-        return JSONResponse(
-            {"success": False, "error": "Invalid credentials."},
-            status_code=status.HTTP_401_UNAUTHORIZED
+            status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
     # Create JWT
     expire = datetime.utcnow() + timedelta(minutes=config.get_config("jwt_expire_time"))
-    payload = {
-        "sub": userid,
-        "exp": expire
-    }
+    payload = {"sub": userid, "exp": expire}
     token = jwt.encode(payload, config.get_config("jwt_secret"), algorithm=config.get_config("jwt_algorithm"))
 
     return {"success": True, "token": token}
@@ -82,24 +86,32 @@ async def register(request: Request):
     data = await request.json()
     userid = data.get("userid")
     password = data.get("password")
-
     if not userid or not password:
         return JSONResponse({"success": False, "error": "Missing userid or password."}, status_code=status.HTTP_400_BAD_REQUEST)
-
     if get_player(userid):
         return JSONResponse({"success": False, "error": "User already exists."}, status_code=status.HTTP_409_CONFLICT)
+    
+    # Use the sha256 hash function
     player = Player(id=userid, elo=config.get_config("starting_elo"), password_hash=hash_password(password))
     create_player(player)
-
-    # Create JWT token
+    
+    # Create JWT
     expire = datetime.utcnow() + timedelta(minutes=config.get_config("jwt_expire_time"))
-    payload = {
-        "sub": userid,
-        "exp": expire
-    }
+    payload = {"sub": userid, "exp": expire}
     token = jwt.encode(payload, config.get_config("jwt_secret"), algorithm=config.get_config("jwt_algorithm"))
-
+    
     return {"success": True, "token": token}
+
+@app.get("/getUserById")
+async def get_user_by_id(userid: str = Query(...)):
+    player = get_player(userid)
+    if not player:
+        return JSONResponse({"success": False, "error": "User not found."}, status_code=404)
+    return {
+        "success": True,
+        "userid": player.id,
+        "elo": player.elo
+    }
 
 @app.post("/update-elo")
 async def update_elo(request: Request):

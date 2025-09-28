@@ -9,6 +9,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (userid: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
@@ -45,10 +46,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const data = await res.json();
     if (data.success && data.token) {
       setToken(data.token);
-      setUser({ userid: data.userid, elo: data.elo });
       localStorage.setItem("access_token", data.token);
-      localStorage.setItem("user", JSON.stringify({ userid: data.userid, elo: data.elo }));
-      return true;
+      // Fetch user details using the token (decode JWT or call /getUserById)
+      const userRes = await fetch(`http://127.0.0.1:8000/getUserById?userid=${userid}`);
+      const userData = await userRes.json();
+      if (userData.success) {
+        setUser({ userid: userData.userid, elo: userData.elo });
+        localStorage.setItem("user", JSON.stringify({ userid: userData.userid, elo: userData.elo }));
+        return true;
+      }
     }
     return false;
   };
@@ -58,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   };
 
-  const value = { user, login, logout, loading };
+  const value = { user, token, login, logout, loading };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
