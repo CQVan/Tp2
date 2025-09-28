@@ -1,13 +1,5 @@
-// app/match/page.tsx
-import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-static";
-
-export default async function Match() {
-  return new NextResponse(null, {
-    status: 301,
-    headers: {
-      Location: "/matchmaking",
-    },
-  });
+export default function Match() {
+  redirect("/matchmaking"); // Works only in server components
 }
