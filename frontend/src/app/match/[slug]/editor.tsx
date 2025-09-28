@@ -452,13 +452,13 @@ export default function MatchPage() {
                               <div className="mb-2">
                                 <span className="text-gray-400">Input:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{testCase.inputs.toString()}</code>
+                                  <code className="text-sm font-mono text-white">{testCase.inputs}</code>
                                 </pre>
                               </div>
                               <div>
                                 <span className="text-gray-400">Output:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{testCase.outputs.toString()}</code>
+                                  <code className="text-sm font-mono text-white">{testCase.outputs}</code>
                                 </pre>
                               </div>
                             </div>
