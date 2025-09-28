@@ -19,7 +19,7 @@ abstract class Compiler {
      * Abstract method to run code.
      * @param code - The code to execute.
      * @param args - Optional arguments to pass to the code.
-     * @returns An object of type `any`.
+     * @returns the result of the execution
      */
     abstract run(code: string, func : string, args?: any): Promise<RunResult>;
 }

@@ -580,22 +580,22 @@ export default function MatchPage() {
                         <p className="mb-4">{question.prompt}</p>
                         <div className="mt-4">
                           <h2 className="text-white font-bold mb-2">Test Cases:</h2>
-                          {question.test_cases.map((testCase, index) => (
-                            <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
-                              <div className="mb-2">
-                                <span className="text-gray-400">Input:</span>
-                                <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs)}</code>
-                                </pre>
+                          {question.test_cases.slice(0, 2).map((testCase, index) => (
+                              <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
+                                <div className="mb-2">
+                                  <span className="text-gray-400">Input:</span>
+                                  <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
+                                    <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs)}</code>
+                                  </pre>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400">Output:</span>
+                                  <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
+                                    <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs)}</code>
+                                  </pre>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-gray-400">Output:</span>
-                                <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs)}</code>
-                                </pre>
-                              </div>
-                            </div>
-                          ))}
+                            ))}
                         </div>
                       </>
                     ) : (
