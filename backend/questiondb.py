@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 
 @dataclass
 class TestCase:
-    input: Any
-    output: Any
+    inputs: Any
+    outputs: Any
 
     @classmethod
     def from_json(cls, data: dict) -> "TestCase":
         return cls(
-            input=data.get("input"),
-            output=data.get("output")
+            input=data.get("inputs"),
+            output=data.get("outputs")
         )
 
 @dataclass
