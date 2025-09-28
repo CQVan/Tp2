@@ -45,7 +45,7 @@ export default function MatchmakingPage() {
     }
     const fetchUserData = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getUserById?userid=${payload.sub}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users?userid=${payload.sub}`);
         if (!res.ok) throw new Error("Failed to fetch user data.");
         const data = await res.json();
         if (data.success) {

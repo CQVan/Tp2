@@ -100,7 +100,7 @@ async def register(request: Request):
     
     return {"success": True, "token": token}
 
-@app.get("/getUserById")
+@app.get("/users")
 async def get_user_by_id(userid: str = Query(...)):
     player = get_player(userid)
     if not player:
