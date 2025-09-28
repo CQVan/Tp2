@@ -12,7 +12,7 @@ import httpx
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
-from fastapi import FastAPI, Query, WebSocket, Request, status, Depends, HTTPException
+from fastapi import FastAPI, Query, WebSocket, Request, WebSocketDisconnect, status, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
 # --- Config Manager (restored from previous version) ---
@@ -146,76 +146,59 @@ class ConfigManager:
         return self._config.get(item)
 
 # --- Connection Manager for Broadcasting ---
-class ConnectionManager:
+class SignalingManager:
+    """Manages active WebSocket connections for signaling purposes."""
     def __init__(self):
-        # Maps session_id to a list of active connections
-        self.active_connections: dict[str, list[WebSocket]] = {}
+        # Maps userid to their active WebSocket connection
+        self.active_connections: dict[str, WebSocket] = {}
 
-    async def connect(self, websocket: WebSocket, session_id: str):
-        await websocket.accept()
-        if session_id not in self.active_connections:
-            self.active_connections[session_id] = []
-        # The key fix: Only allow 2 players per session
-        if len(self.active_connections[session_id]) >= 2:
-            await websocket.close(code=1008, reason="Session is full.")
-            return False
-        self.active_connections[session_id].append(websocket)
-        return True
+    # CHANGE: Renamed from 'connect' and no longer calls accept().
+    # The endpoint now handles accepting the connection.
+    def register(self, userid: str, websocket: WebSocket):
+        """Registers an authenticated user's WebSocket connection."""
+        self.active_connections[userid] = websocket
+        print(f"User {userid} registered for signaling.")
 
-    async def disconnect(self, websocket: WebSocket, session_id: str):
-        if session_id in self.active_connections:
-            self.active_connections[session_id].remove(websocket)
-            # If anyone disconnects, close all remaining connections and delete session
-            for ws in list(self.active_connections[session_id]):
-                try:
-                    await ws.close(code=1011, reason="Opponent disconnected. Session closed.")
-                except Exception:
-                    pass
-            del self.active_connections[session_id]
+    def disconnect(self, userid: str):
+        """Removes a user's connection."""
+        if userid in self.active_connections:
+            del self.active_connections[userid]
+            print(f"User {userid} disconnected.")
 
-    async def update_elo_for_session(self, session_id: str, winner_userid: str, loser_userid: str):
-        # Call /update-elo for both winner and loser
-        async with httpx.AsyncClient() as client:
-            # Winner: win=True
-            await client.post(
-                "http://127.0.0.1:8000/update-elo",
-                json={"userid": winner_userid, "sessionid": session_id, "win": True}
-            )
-            # Loser: win=False
-            await client.post(
-                "http://127.0.0.1:8000/update-elo",
-                json={"userid": loser_userid, "sessionid": session_id, "win": False}
-            )
-
-    async def broadcast(self, message: str, websocket: WebSocket, session_id: str):
-        if session_id in self.active_connections:
-            for connection in self.active_connections[session_id]:
-                if connection != websocket:
-                    await connection.send_text(message)
-
+    async def forward_message(self, sender_userid: str, message: dict):
+        # ... (This method is unchanged)
+        target_userid = message.get("target")
+        if not target_userid:
+            return
+        recipient_ws = self.active_connections.get(target_userid)
+        if recipient_ws:
+            message["from"] = sender_userid
+            await recipient_ws.send_json(message)
+        else:
+            print(f"Warning: Could not find target user {target_userid} to forward message.")
 # --- Matchmaking Logic (with disconnect handling) ---
 class DynamicMatchmaker:
     def __init__(self):
         self.queues = {}
         self.bracket_size = config.get_config("bracket_size")
-        # The key fix: Map websockets to their removal info
+        # Maps websockets to their removal info (userid, bracket_key)
         self.ws_map = {}
 
     def _get_bracket_key(self, elo):
         return math.floor((elo - 1) / self.bracket_size) if elo > 0 else 0
 
     def add_player(self, player: Player, ws: WebSocket):
-        elo = player.elo
-        bracket_key = self._get_bracket_key(elo)
+        bracket_key = self._get_bracket_key(player.elo)
         
         if bracket_key not in self.queues:
             self.queues[bracket_key] = deque()
         
         queue = self.queues[bracket_key]
+        # Store player object and websocket
         queue.append((player, ws))
         
-        # Map this websocket so we can find it on disconnect
-        self.ws_map[ws] = (queue, (player, ws))
+        # Map this websocket for easy removal on disconnect
+        self.ws_map[ws] = (player.id, bracket_key)
         
         if len(queue) >= 2:
             p1, ws1 = queue.popleft()
@@ -225,99 +208,87 @@ class DynamicMatchmaker:
             del self.ws_map[ws1]
             del self.ws_map[ws2]
             
-            if not queue:
-                del self.queues[bracket_key]
-            
             return [(p1, ws1), (p2, ws2)]
         return None
 
     def remove_player(self, ws: WebSocket):
         if ws in self.ws_map:
-            queue, player_tuple = self.ws_map[ws]
-            try:
-                queue.remove(player_tuple)
-                print(f"Player {player_tuple[0]['user_id']} removed from queue on disconnect.")
-            except ValueError:
-                # Player was already matched and removed, do nothing
-                pass
+            userid, bracket_key = self.ws_map[ws]
+            queue = self.queues.get(bracket_key)
+            if queue:
+                # Rebuild the deque without the disconnected player
+                self.queues[bracket_key] = deque([(p, w) for p, w in queue if p.id != userid])
             del self.ws_map[ws]
+            print(f"Player {userid} removed from queue on disconnect.")
+
 
 # --- Globals ---
 config = ConfigManager()
 matchmaker = DynamicMatchmaker()
-manager = ConnectionManager()
+manager = SignalingManager()
 # Track active session IDs
 active_sessions = set()
 
 # --- WebSockets Endpoints (Corrected) ---
 
-@app.websocket("/matchmaking")
-async def matchmaking_ws(websocket: WebSocket):
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    userid = None
+    
+    # FIX 1: Accept the connection IMMEDIATELY upon arrival.
     await websocket.accept()
+    
     try:
-        data = await websocket.receive_json()
-        token = data.get("token")
+        # Now that we've accepted, we can wait for the first message.
+        initial_data = await websocket.receive_json()
+        token = initial_data.get("token")
+        
+        token_payload = decode_token(token)
+        if not token_payload["valid"]:
+            await websocket.close(code=4001, reason="Invalid or expired token.")
+            return
 
-        payload = decode_token(token=token)
-        player = get_player(payload.get("sub"))
+        userid = token_payload["data"]["sub"]
+        player = get_player(userid)
+        if not player:
+            await websocket.close(code=4004, reason="Player not found.")
+            return
+            
+        # FIX 2: Register the now-authenticated connection in the manager.
+        manager.register(userid, websocket)
 
+        # 2. ADD TO MATCHMAKING QUEUE (The rest of your logic is correct)
         match = matchmaker.add_player(player, websocket)
         
         if match:
-            # Use a short, unique session_id (8-10 chars, url-safe)
-            session_id = secrets.token_urlsafe(6)
-            active_sessions.add(session_id)
-            p1_data, p1_ws = match[0]
-            p2_data, p2_ws = match[1]
-
-            await p1_ws.send_json({"event": "match_found", "session_id": session_id, "opponent": p2_data})
-            await p2_ws.send_json({"event": "match_found", "session_id": session_id, "opponent": p1_data})
-            # Close the matchmaking connections gracefully
-            await p1_ws.close()
-            await p2_ws.close()
-        else:
-            # Keep connection open while waiting in queue
-            while True:
-                await asyncio.sleep(1) # Keep alive
-    except WebSocketDisconnect:
-        # Solution: Handle disconnects from the queue
-        matchmaker.remove_player(websocket)
-
-@app.websocket("/match/{session_id}")
-async def match_ws(websocket: WebSocket, session_id: str):
-    # Only allow joining if session is active
-    if session_id not in active_sessions:
-        await websocket.close(code=4000, reason="Session expired or does not exist.")
-        return
-    is_connected = await manager.connect(websocket, session_id)
-    if not is_connected:
-        return # Session was full
-
-    # Store user_id for this websocket
-    if not hasattr(manager, "ws_to_userid"):
-        manager.ws_to_userid = {}
-
-    try:
-        # First message from each client should be their user_id
-        user_id = await websocket.receive_text()
-        manager.ws_to_userid[websocket] = user_id
+            # 3. MATCH FOUND
+            (p1, ws1), (p2, ws2) = match
+            
+            await ws1.send_json({
+                "event": "match_found",
+                "opponent": {"id": p2.id, "elo": int(p2.elo)},
+                "role": "offerer"
+            })
+            
+            await ws2.send_json({
+                "event": "match_found",
+                "opponent": {"id": p1.id, "elo": int(p1.elo)},
+                "role": "answerer"
+            })
+        
+        # 4. LISTEN FOR AND FORWARD SIGNALING MESSAGES
         while True:
             data = await websocket.receive_json()
-            # If the message is a game over event, handle elo update
-            if isinstance(data, dict) and data.get("event") == "game_over":
-                winner = data.get("winner")
-                loser = data.get("loser")
-                if winner and loser:
-                    await manager.update_elo_for_session(session_id, winner, loser)
-            else:
-                # Broadcast to all in session except sender
-                for ws in manager.active_connections[session_id]:
-                    if ws != websocket:
-                        await ws.send_json(data)
+            event_type = data.get("event")
+            if event_type in ["webrtc_offer", "webrtc_answer", "webrtc_ice_candidate"]:
+                await manager.forward_message(userid, data)
+
     except WebSocketDisconnect:
-        await manager.disconnect(websocket, session_id)
-        if hasattr(manager, "ws_to_userid"):
-            manager.ws_to_userid.pop(websocket, None)
-        # Remove session from active_sessions if destroyed
-        if session_id not in manager.active_connections:
-            active_sessions.discard(session_id)
+        if userid:
+            manager.disconnect(userid)
+            matchmaker.remove_player(websocket)
+    except Exception as e:
+        print(f"An error occurred with user {userid}: {e}")
+        if userid:
+            manager.disconnect(userid)
+            matchmaker.remove_player(websocket)
