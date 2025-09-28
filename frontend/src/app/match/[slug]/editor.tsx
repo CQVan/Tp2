@@ -283,7 +283,8 @@ export default function MatchPage() {
           if (data.event === 'chat') {
             setMessages((prevMessages) => [...prevMessages, data]);
           } else if (data.event === 'question_data') {
-            setQuestion(data.payload);
+            console.log(data.payload as Question);
+            setQuestion(data.payload as Question);
           }
         };
       };
@@ -388,8 +389,8 @@ export default function MatchPage() {
         }
 
         const outputs = question.test_cases[i].outputs;
-        if(outputs !== result.output){
-          //fail
+        if(outputs !== result.output){ // not expected output
+          
         }
 
         
