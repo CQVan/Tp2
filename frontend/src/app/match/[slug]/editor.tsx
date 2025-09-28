@@ -303,8 +303,7 @@ export default function MatchPage() {
             setMessages((prevMessages) => [...prevMessages, data]);
           } else if (data.event === 'question_data') {
             setQuestion(data.payload as Question);
-            setCode(question?.initial_code ?? {});
-            console.log(data.payload as Question);
+            setCode((data.payload as Question).initial_code ?? {});
           } else if (data.event === 'give_up') {
             // Opponent has given up; navigate back to matchmaking
             setConnectionStatus('Opponent left the match. Returning to matchmaking...');
@@ -459,7 +458,8 @@ export default function MatchPage() {
         
         if (data.success && data.question) {
           setQuestion(data.question);
-          setCode(question?.initial_code ?? {});
+          setCode((data.question as Question).initial_code ?? {});
+
           
           // If we're the offerer, share the question with the opponent
           if (dataChannel.current?.readyState === 'open') {
