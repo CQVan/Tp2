@@ -82,6 +82,12 @@ export default function MatchPage() {
     const [code, setCode] = useState<Record<string,string>>({});
     const [language, setLanguage] = useState<string>("javascript");
     const editorRef = useRef<any>(null);
+    // Terminal UI state
+    const [terminalHeight, setTerminalHeight] = useState<number>(220);
+    const [terminalLines, setTerminalLines] = useState<string[]>(["⚙️ Terminal ready. Use this area to show logs/output."]); // placeholder content
+    const isResizingRef = useRef(false);
+    const startYRef = useRef(0);
+    const startHeightRef = useRef(220);
 
     // NEW: State for current user and chat messages
     const [currentUser, setCurrentUser] = useState<{ userid: string } | null>(null);
@@ -333,7 +339,35 @@ export default function MatchPage() {
 
     // Your existing editor functions...
     const handleEditorMount: OnMount = (editor) => { editorRef.current = editor; };
-    useEffect(() => { editorRef.current?.layout(); }, [sidebarWidth]);
+    useEffect(() => { editorRef.current?.layout(); }, [sidebarWidth, terminalHeight]);
+
+    // Handle vertical resize for the terminal pane
+    useEffect(() => {
+      const onMouseMove = (e: MouseEvent) => {
+        if (!isResizingRef.current) return;
+        const delta = e.clientY - startYRef.current;
+        // Drag handle is above the terminal; moving mouse down increases delta -> reduce terminal height
+        const newHeight = Math.max(100, Math.min(700, startHeightRef.current - delta));
+        setTerminalHeight(newHeight);
+      };
+      const onMouseUp = () => {
+        if (isResizingRef.current) {
+          isResizingRef.current = false;
+        }
+      };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+    }, []);
+
+    const startResize = (e: React.MouseEvent<HTMLDivElement>) => {
+      isResizingRef.current = true;
+      startYRef.current = e.clientY;
+      startHeightRef.current = terminalHeight;
+    };
 
     function update_code(value : string | undefined){
       setCode(prev => ({
@@ -406,11 +440,11 @@ export default function MatchPage() {
               </div>
           </Sidebar>
           
-          {/* Center Panel: Code Editor */}
-          <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${sidebarWidth}px - 350px)` }}>
+          {/* Center Panel: Code Editor + Resizable Terminal */}
+          <div className="flex-1 flex flex-col min-h-0" style={{ width: `calc(100% - ${sidebarWidth}px - 350px)` }}>
             <div className="p-2 bg-gray-800 text-center text-white font-bold">{connectionStatus}</div>
             <div className="flex gap-2 p-2 bg-gray-800 justify-end">
-              <select>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-gray-900 text-white p-1 rounded">
                 <option value={"javascript"}>JavaScript</option>
                 <option value={"python"}>Python</option>
               </select>
@@ -418,14 +452,40 @@ export default function MatchPage() {
               <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Submit</button>
               <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
             </div>
-            <Editor
-              height="100%"
-              language={language}
-              theme="vs-dark"
-              value={code[language]}
-              onChange={(value) => update_code(value)}
-              onMount={(editor) => { editorRef.current = editor; }}
-            />
+            {/* Content area with editor and resizable terminal */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 min-h-0">
+                <Editor
+                  height="100%"
+                  language={language}
+                  theme="vs-dark"
+                  value={code[language]}
+                  onChange={(value) => update_code(value)}
+                  onMount={(editor) => { editorRef.current = editor; }}
+                />
+              </div>
+              {/* Drag handle */}
+              <div
+                className="h-2 bg-gray-700 hover:bg-gray-600 cursor-ns-resize select-none"
+                onMouseDown={startResize}
+                title="Drag to resize terminal"
+              />
+              {/* Terminal Pane */}
+              <div
+                className="bg-black text-green-400 overflow-y-auto border-t border-gray-700"
+                style={{ height: `${terminalHeight}px` }}
+              >
+                <div className="p-2 font-mono text-sm whitespace-pre-wrap break-words">
+                  {terminalLines.length === 0 ? (
+                    <span className="text-gray-400">Terminal is empty.</span>
+                  ) : (
+                    terminalLines.map((line, idx) => (
+                      <div key={idx}>{line}</div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* NEW: Right Panel: Chat */}
