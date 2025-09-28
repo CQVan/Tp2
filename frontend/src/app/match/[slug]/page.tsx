@@ -1,9 +1,10 @@
-export default function Page({ params }: { params: { slug: string } }) {
-  const session_id = params.slug;
+import { Suspense } from "react";
+import MatchPage from "./editor";
 
+export default function Page({ params }: { params: { slug: string } }) {
   return (
-    <div>
-      
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <MatchPage />
+    </Suspense>
   );
 }
