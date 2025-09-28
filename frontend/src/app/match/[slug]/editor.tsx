@@ -116,8 +116,9 @@ export default function MatchPage() {
 
     setCurrentUser({ userid: getUserIdFromToken(token)! });
 
-    // 2. Connect to the signaling server
-    ws.current = new WebSocket("ws://127.0.0.1:8000/ws");
+    // Connect to WebSocket using environment variable
+    const wsUrl = process.env.NEXT_PUBLIC_WSS_URL || 'ws://127.0.0.1:8000/ws';
+    ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
       setConnectionStatus("Signaling server connected...");
