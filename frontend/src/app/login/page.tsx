@@ -146,6 +146,27 @@ function RegisterForm() {
       return;
     }
 
+    //password length
+    if (password.length >= 10){
+    setError("Password too long")
+    return;
+    }
+    //password capital letter
+    if (!/[A-Z]/.test(password)) {
+      setError("Password must include at least one uppercase letter.");
+      return;
+    }
+    //password must have an special charactor
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      setError("Password must include at least one special character.");
+      return;
+    }
+    //password must have number
+    if (!/\d/.test(password)) {
+      setError("Password must include at least one number.");
+      return;
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/register`, {
         method: "POST",
