@@ -1,14 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-export default function Page() {
+function LoginPage() {
   const [useLogin, setUseLogin] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        window.location.href = "/matchmaking";
+      }
+    }
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -30,6 +39,8 @@ export default function Page() {
     </div>
   );
 }
+
+export default LoginPage;
 
 function LoginForm() {
   const [error, setError] = useState<string | null>(null);

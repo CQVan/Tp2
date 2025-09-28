@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-// A simple helper function to decode the JWT payload
+// No changes needed for decodeJwtPayload helper function
+
 function decodeJwtPayload(token: string) {
   try {
     const base64Url = token.split('.')[1];
@@ -19,39 +20,32 @@ function decodeJwtPayload(token: string) {
   }
 }
 
-
 export default function MatchmakingPage() {
   const [user, setUser] = useState<{ userid: string; elo: number } | null>(null);
   const [status, setStatus] = useState<string>("Click MATCHMAKE to enter the queue.");
   const [isQueueing, setIsQueueing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // CHANGE: Use useRef to hold the WebSocket instance
+  // This prevents it from being re-created on every render
+  const ws = useRef<WebSocket | null>(null);
 
+  // This effect for fetching user data is fine, no changes needed here.
   useEffect(() => {
-    // This effect runs once when the component mounts
     const token = localStorage.getItem("authToken");
-
     if (!token) {
-      // If no token, redirect to login
       window.location.href = '/login';
       return;
     }
-
     const payload = decodeJwtPayload(token);
     if (!payload || !payload.sub) {
       setError("Invalid auth token. Please log in again.");
-      // Optional: clear bad token and redirect
-      // localStorage.removeItem("authToken");
-      // window.location.href = '/login';
       return;
     }
-
-    // Use the userid from the token to fetch user data
     const fetchUserData = async () => {
       try {
         const res = await fetch(`http://127.0.0.1:8000/getUserById?userid=${payload.sub}`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch user data.");
-        }
+        if (!res.ok) throw new Error("Failed to fetch user data.");
         const data = await res.json();
         if (data.success) {
           setUser({ userid: data.userid, elo: data.elo });
@@ -62,62 +56,92 @@ export default function MatchmakingPage() {
         setError("Could not connect to the server to get user details.");
       }
     };
-
     fetchUserData();
-  }, []); // Empty dependency array means this runs only once on mount
+  }, []);
+
+  // CHANGE: Add a cleanup effect for the WebSocket connection
+  useEffect(() => {
+    // This function will be called when the component unmounts
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, []);
 
   function handleMatchmake() {
     const token = localStorage.getItem("authToken");
     if (!token) {
-        setError("Authentication token not found. Please log in again.");
-        return;
+      setError("Authentication token not found. Please log in again.");
+      return;
     }
 
     setIsQueueing(true);
-    setStatus("Connecting to matchmaking...");
-    const ws = new WebSocket("ws://127.0.0.1:8000/matchmaking");
+    setStatus("Connecting...");
 
-    ws.onopen = () => {
-      setStatus("In queue, waiting for opponent...");
-      // Send the token for authentication
-      ws.send(JSON.stringify({ token }));
+    // CHANGE: Connect to the new single endpoint
+    ws.current = new WebSocket("ws://127.0.0.1:8000/ws");
+
+    ws.current.onopen = () => {
+      setStatus("In queue, waiting for an opponent...");
+      // Send the token for authentication and to enter the queue
+      ws.current?.send(JSON.stringify({ token }));
     };
 
-    ws.onmessage = (event) => {
+    ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.event === "match_found") {
-        setStatus("Match found! Redirecting...");
-        localStorage.setItem("session_id", data.session_id);
+        // CHANGE: This is the new logic!
+        // We do NOT redirect. We stay on this page to start the P2P handshake.
+        setStatus(`✅ Match found against ${data.opponent.id}! Preparing the game...`);
+        setIsQueueing(false); // We are no longer in the queue
+        
+        // Store opponent details for the next step
         localStorage.setItem("opponent", JSON.stringify(data.opponent));
-        ws.close();
-        // Redirect to the match page (you'll need to create this page)
-        window.location.href = `/match/${data.session_id}`;
+        localStorage.setItem("role", data.role); // 'offerer' or 'answerer'
+
+        // The WebSocket connection (ws.current) is kept alive for signaling.
+        
+        // --------------------------------------------------------------------
+        // TODO: The WebRTC handshake logic will be triggered from here.
+        // For now, we'll just log it.
+        console.log("Match Found! Ready to start WebRTC handshake.", data);
+        // --------------------------------------------------------------------
       }
     };
 
-    ws.onclose = (event) => {
-      if (!event.wasClean) setStatus("Connection closed unexpectedly. Please try again.");
+    ws.current.onclose = () => {
+      setStatus("Disconnected from queue.");
       setIsQueueing(false);
     };
     
-    ws.onerror = () => {
-      setStatus("Error connecting to matchmaking service.");
+    ws.current.onerror = () => {
+      setError("Could not connect to the matchmaking service.");
       setIsQueueing(false);
     };
   }
 
+  function handleCancel() {
+    if (ws.current) {
+      ws.current.close(); // The onclose event will handle the state updates
+    }
+  }
+  
+  // No changes needed for the JSX rendering part below this line,
+  // but we'll add the cancel button.
+
   if (error) {
-      return (
-          <div className="flex min-h-screen items-center justify-center">
-              <Card className="p-8 text-center">
-                  <div className="text-xl font-bold mb-4 text-red-600">Error</div>
-                  <p>{error}</p>
-                  <a href="/login">
-                      <Button className="mt-4">Go to Login</Button>
-                  </a>
-              </Card>
-          </div>
-      );
+    return (
+        <div className="flex min-h-screen items-center justify-center">
+            <Card className="p-8 text-center">
+                <div className="text-xl font-bold mb-4 text-red-600">Error</div>
+                <p>{error}</p>
+                <a href="/login">
+                    <Button className="mt-4">Go to Login</Button>
+                </a>
+            </Card>
+        </div>
+    );
   }
 
   if (!user) {
@@ -131,19 +155,38 @@ export default function MatchmakingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 relative">
+      {/* Logout button in the top-right corner */}
+      <button
+        className="absolute top-4 right-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+        onClick={() => {
+          localStorage.removeItem("authToken");
+          window.location.href = "/login";
+        }}
+      >
+        Logout
+      </button>
       <Card className="w-full max-w-md p-8 flex flex-col items-center gap-8">
         <div className="w-full flex flex-col items-center gap-2">
           <div className="text-2xl font-bold">Hello, {user.userid}!</div>
           <div className="text-lg text-gray-600">Elo: <span className="font-mono">{user.elo}</span></div>
         </div>
-        <Button
-          className="w-full text-2xl py-8"
-          disabled={isQueueing}
-          onClick={handleMatchmake}
-        >
-          {isQueueing ? 'WAITING...' : 'MATCHMAKE'}
-        </Button>
+        {isQueueing ? (
+          <Button
+            className="w-full text-2xl py-8"
+            variant="destructive"
+            onClick={handleCancel}
+          >
+            CANCEL
+          </Button>
+        ) : (
+          <Button
+            className="w-full text-2xl py-8"
+            onClick={handleMatchmake}
+          >
+            MATCHMAKE
+          </Button>
+        )}
         <div className="w-full text-center text-gray-500 mt-4 min-h-[24px]">{status}</div>
       </Card>
     </div>
