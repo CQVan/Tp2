@@ -419,13 +419,13 @@ export default function MatchPage() {
                               <div className="mb-2">
                                 <span className="text-gray-400">Input:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs, null, 2)}</code>
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs)}</code>
                                 </pre>
                               </div>
                               <div>
                                 <span className="text-gray-400">Output:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs, null, 2)}</code>
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs )}</code>
                                 </pre>
                               </div>
                             </div>
