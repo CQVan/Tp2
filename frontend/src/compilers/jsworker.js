@@ -1,3 +1,4 @@
+// js-worker.js
 self.onmessage = async (e) => {
   const { code, func, args } = e.data;
   const logs = [];
@@ -10,17 +11,18 @@ self.onmessage = async (e) => {
   };
 
   try {
-    // Evaluate the user code
-    eval(code);
+    // Attach user function(s) to self
+    // This assumes the user code defines a function like: function foo(...) { ... }
+    eval(`${code}; self['${func}'] = ${func};`);
 
-    // Check if function exists
-    if (typeof self[func] !== 'function') {
+    // Check the function
+    const fn = self[func];
+    if (typeof fn !== 'function') {
       throw new Error(`Function "${func}" not found`);
     }
 
-    // Call the function with arguments
-    const result = await self[func](...args);
-
+    // Call the function
+    const result = await fn(...args);
     self.postMessage({ output: result, logs });
   } catch (err) {
     self.postMessage({ output: null, logs: [...logs, `Error: ${err.message}`] });
