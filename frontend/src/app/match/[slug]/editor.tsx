@@ -92,11 +92,17 @@ export default function MatchPage() {
 
     // NEW: State for current user and chat messages
     const [currentUser, setCurrentUser] = useState<{ userid: string } | null>(null);
-    const [messages, setMessages] = useState<any[]>([]);
-    const [question, setQuestion] = useState<Question | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [opponentId, setOpponentId] = useState<string | null>(null);
 
     // Network and Game State
-    const [connectionStatus, setConnectionStatus] = useState("Initializing...");
+  const [connectionStatus, setConnectionStatus] = useState("Initializing...");
+  const [matchStartTime, setMatchStartTime] = useState<number | null>(null);
+  const [remainingMs, setRemainingMs] = useState<number>(60 * 60 * 1000); // 60 minutes
+  const resultFinalizedRef = useRef<boolean>(false);
   
     // Refs for persistent network objects
     const ws = useRef<WebSocket | null>(null);
@@ -113,15 +119,18 @@ export default function MatchPage() {
   useEffect(() => {
     // 1. Retrieve match data from localStorage
     const opponentData = JSON.parse(localStorage.getItem("opponent") || "{}");
-    const role = localStorage.getItem("role");
+    const roleFromStorage = localStorage.getItem("role");
     const token = localStorage.getItem("authToken");
 
-    if (!opponentData.id || !role || !token) {
+    if (!opponentData.id || !roleFromStorage || !token) {
       setConnectionStatus("Error: Missing match data.");
       return;
     }
 
     setCurrentUser({ userid: getUserIdFromToken(token)! });
+    setRole(roleFromStorage);
+    setOpponentId(opponentData.id);
+    setSessionId(localStorage.getItem("session_id"));
 
     // Connect to WebSocket using environment variable
     const wsUrl = process.env.NEXT_PUBLIC_WSS_URL;
@@ -136,7 +145,7 @@ export default function MatchPage() {
       // Authenticate this connection
       ws.current?.send(JSON.stringify({ token }));
       // Start the WebRTC handshake
-      initializePeerConnection(role, opponentData.id);
+      initializePeerConnection(roleFromStorage, opponentData.id);
     };
 
     // 3. Listen for signaling messages
@@ -161,7 +170,7 @@ export default function MatchPage() {
 
     // --- WebRTC Core Functions ---
 
-    const initializePeerConnection = async (role: string, opponentId: string) => {
+  const initializePeerConnection = async (role: string, opponentId: string) => {
         const pc = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
         });
@@ -268,10 +277,19 @@ export default function MatchPage() {
     const setupDataChannelEvents = (dc: RTCDataChannel) => {
         dc.onopen = () => {
             setConnectionStatus("✅ Data Channel Open");
-            const role = localStorage.getItem("role");
-            if (role === "offerer") {
+      const roleLocal = localStorage.getItem("role");
+      if (roleLocal === "offerer") {
                 // Caller fetches and shares the question
                 fetchAndShareQuestion();
+        // Start the match timer and broadcast start
+        const start = Date.now();
+        setMatchStartTime(start);
+        const sid = localStorage.getItem("session_id");
+        setSessionId(sid);
+        // Tell opponent about match start
+        try {
+          dc.send(JSON.stringify({ event: 'match_start', payload: { startTime: start, sessionid: sid } }));
+        } catch {}
             }
         };
 
@@ -295,6 +313,23 @@ export default function MatchPage() {
             try { peerConnection.current?.close(); } catch {}
             try { ws.current?.close(); } catch {}
             setTimeout(() => router.push('/matchmaking'), 500);
+          } else if (data.event === 'match_start') {
+            // Sync start time and session id
+            const { startTime, sessionid } = data.payload || {};
+            if (typeof startTime === 'number') setMatchStartTime(startTime);
+            if (sessionid) setSessionId(sessionid);
+          } else if (data.event === 'submit') {
+            // Record opponent submission; if we're the offerer, decide winner now if not finalized
+            const payload = data.payload || {};
+            appendTerminal(`Opponent submitted at ${payload.timeTakenMs} ms`);
+            if (localStorage.getItem('role') === 'offerer' && !resultFinalizedRef.current) {
+              decideWinnerFirstSubmit(payload);
+            }
+          } else if (data.event === 'match_result') {
+            // Show result, then navigate
+            const { winner, loser, sessionid, winnerTimeMs, loserTimeMs } = data.payload || {};
+            appendTerminal(`Match result: winner=${winner} (${winnerTimeMs} ms), loser=${loser} (${loserTimeMs} ms) [session: ${sessionid}]`);
+            finalizeAndExit();
           }
         };
       };
@@ -302,6 +337,31 @@ export default function MatchPage() {
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(data));
         }
+    };
+
+    // Append a line to the terminal UI
+    const appendTerminal = (line: string) => {
+      setTerminalLines((prev) => [...prev, line]);
+    };
+
+    // Calculate remaining time every second
+    useEffect(() => {
+      if (!matchStartTime) return;
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - matchStartTime;
+        const remain = Math.max(0, 60 * 60 * 1000 - elapsed);
+        setRemainingMs(remain);
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [matchStartTime]);
+
+    const formatTime = (ms: number) => {
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
     // Handle Give Up action: notify peer (best-effort), close all connections, and navigate away
@@ -346,6 +406,47 @@ export default function MatchPage() {
         // Add the message to our own chat window immediately
         setMessages((prevMessages) => [...prevMessages, message]);
       }
+    };
+
+    // First-submit wins decision. Only the offerer calls this and performs ELO updates and result broadcast.
+    const decideWinnerFirstSubmit = async (submission: { userid: string; sessionid: string; timeTakenMs: number; }) => {
+      if (resultFinalizedRef.current) return;
+      resultFinalizedRef.current = true;
+      const winner = submission.userid;
+      const loser = currentUser && opponentId === currentUser.userid ? submission.userid : (opponentId || '');
+      // Ensure loser is the other participant
+      const computedLoser = winner === currentUser?.userid ? (opponentId || '') : (currentUser?.userid || '');
+      const finalLoser = computedLoser || loser;
+      const winnerTimeMs = submission.timeTakenMs;
+      const loserTimeMs = matchStartTime ? Date.now() - matchStartTime : winnerTimeMs + 1;
+
+      appendTerminal(`Determined winner: ${winner} | loser: ${finalLoser}`);
+
+      // Call backend to update ELOs
+      try {
+        const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+        if (base && sessionId) {
+          await fetch(`${base}/update-elo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: winner, sessionid: sessionId, win: true }) });
+          await fetch(`${base}/update-elo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: finalLoser, sessionid: sessionId, win: false }) });
+        }
+      } catch (e) {
+        appendTerminal(`ELO update failed: ${String(e)}`);
+      }
+
+      // Broadcast result to opponent
+      try {
+        dataChannel.current?.send(JSON.stringify({ event: 'match_result', payload: { winner, loser: finalLoser, sessionid: sessionId, winnerTimeMs, loserTimeMs } }));
+      } catch {}
+
+      // Exit
+      finalizeAndExit();
+    };
+
+    const finalizeAndExit = () => {
+      try { dataChannel.current?.close(); } catch {}
+      try { peerConnection.current?.close(); } catch {}
+      try { ws.current?.close(); } catch {}
+      setTimeout(() => router.push('/matchmaking'), 400);
     };
 
     const fetchAndShareQuestion = async () => {
@@ -487,7 +588,23 @@ export default function MatchPage() {
                 <option value={"python"}>Python</option>
               </select>
               <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Test</button>
-              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Submit</button>
+              <button
+                onClick={() => {
+                  if (!currentUser || !matchStartTime || !sessionId) return;
+                  const timeTakenMs = Date.now() - matchStartTime;
+                  const payload = { userid: currentUser.userid, sessionid: sessionId, timeTakenMs };
+                  appendTerminal(`You submitted at ${timeTakenMs} ms`);
+                  // Send to opponent
+                  try { dataChannel.current?.send(JSON.stringify({ event: 'submit', payload })); } catch {}
+                  // If we're the offerer, decide immediately
+                  if (role === 'offerer' && !resultFinalizedRef.current) {
+                    decideWinnerFirstSubmit(payload);
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
+              >
+                Submit
+              </button>
               <button onClick={handleGiveUp} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
             </div>
             {/* Content area with editor and resizable terminal */}
@@ -514,6 +631,9 @@ export default function MatchPage() {
                 style={{ height: `${terminalHeight}px` }}
               >
                 <div className="p-2 font-mono text-sm whitespace-pre-wrap break-words">
+                  <div className="mb-2 text-gray-300">
+                    Time remaining: {formatTime(remainingMs)}
+                  </div>
                   {terminalLines.length === 0 ? (
                     <span className="text-gray-400">Terminal is empty.</span>
                   ) : (
