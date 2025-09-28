@@ -117,7 +117,11 @@ export default function MatchPage() {
     setCurrentUser({ userid: getUserIdFromToken(token)! });
 
     // Connect to WebSocket using environment variable
-    const wsUrl = process.env.NEXT_PUBLIC_WSS_URL || 'ws://127.0.0.1:8000/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WSS_URL;
+    if (!wsUrl) {
+      setConnectionStatus("Error: WebSocket URL is not defined.");
+      return;
+    }
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
@@ -308,7 +312,7 @@ export default function MatchPage() {
       if (!sessionId) return;
   
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/question?sessionid=${sessionId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/question?sessionid=${sessionId}`);
         const data = await response.json();
         
         if (data.success && data.question) {
@@ -374,13 +378,13 @@ export default function MatchPage() {
                               <div className="mb-2">
                                 <span className="text-gray-400">Input:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.input, null, 2)}</code>
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs, null, 2)}</code>
                                 </pre>
                               </div>
                               <div>
                                 <span className="text-gray-400">Output:</span>
                                 <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.output, null, 2)}</code>
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs, null, 2)}</code>
                                 </pre>
                               </div>
                             </div>
