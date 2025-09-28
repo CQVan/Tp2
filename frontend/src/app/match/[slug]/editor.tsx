@@ -349,9 +349,16 @@ export default function MatchPage() {
       for(let i = 0 ; i < (amt ?? question?.test_cases.length); i++){
         const inputs = question.test_cases[i].inputs;  
         const result : RunResult = await compiler.run(code[language], question.target_func, inputs);
-        if(!result.output) {/** fail the test*/ return; }
+        if(!result.output){ // error in code
+          return {}
+        }
 
-        // show test passed
+        const outputs = question.test_cases[i].outputs;
+        if(outputs !== result.output){
+          //fail
+        }
+
+        
       }
     }
 

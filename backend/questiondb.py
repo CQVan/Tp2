@@ -1,10 +1,26 @@
 from dataclasses import dataclass
+from decimal import Decimal
 import os
 from typing import Any, Dict, List
 import boto3
-import random
 
 from dotenv import load_dotenv
+
+def convert_floats(value: Any) -> Any:
+    """
+    Recursively convert floats (or float-like values) to Decimal.
+    Works for dicts, lists, tuples, and single values.
+    """
+    if isinstance(value, float):
+        return Decimal(str(value))
+    elif isinstance(value, dict):
+        return {k: convert_floats(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [convert_floats(v) for v in value]
+    elif isinstance(value, tuple):
+        return tuple(convert_floats(v) for v in value)
+    else:
+        return value
 
 @dataclass
 class TestCase:
@@ -14,8 +30,8 @@ class TestCase:
     @classmethod
     def from_json(cls, data: dict) -> "TestCase":
         return cls(
-            inputs=data.get("inputs"),
-            outputs=data.get("outputs")
+            inputs=convert_floats(data.get("inputs")),
+            outputs=convert_floats(data.get("outputs"))
         )
 
 @dataclass
@@ -23,7 +39,7 @@ class Question:
     title: str
     prompt: str
     difficulty: int
-    inital_code: Dict[str, str]
+    initial_code: Dict[str, str]
     target_func: str
     test_cases: List[TestCase]
 
@@ -35,7 +51,7 @@ class Question:
             title=data.get("title", ""),
             prompt=data.get("prompt", ""),
             difficulty=data.get("difficulty", 0),
-            inital_code=data.get("inital_code", {}),
+            initial_code=data.get("initial_code", {}),
             target_func=data.get("target_func", ""),
             test_cases=test_cases
         )
@@ -91,7 +107,7 @@ def get_question() -> Question | None:
 
     return question
 
-def add_question(question: Question):
+def add_question(question: Question, i: int):
     """
     Adds a Question object to the DynamoDB Questions table.
     Assigns a new primary key (id) based on current item count.
@@ -101,13 +117,13 @@ def add_question(question: Question):
 
     # Convert Question object to a dict suitable for DynamoDB
     item = {
-        'id': new_id,
+        'id': i,
         'title': question.title,
         'prompt': question.prompt,
         'difficulty': question.difficulty,
-        'inital_code': question.inital_code,
+        'initial_code': question.initial_code,
         'target_func': question.target_func,
-        'test_cases': [{'input': tc.input, 'output': tc.output} for tc in question.test_cases]
+        'test_cases': [{'inputs': tc.inputs, 'outputs': tc.outputs} for tc in question.test_cases]
     }
 
     # Put the item into DynamoDB
