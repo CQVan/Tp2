@@ -320,7 +320,7 @@ async def get_question_for_session(sessionid: str = Query(...)):
             "prompt": question.prompt,
             "difficulty": question.difficulty,
             "test_cases": [
-                {"input": tc.input, "output": tc.output}
+                {"input": tc.inputs, "output": tc.outputs}
                 for tc in question.test_cases
             ]
         }
