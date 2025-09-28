@@ -14,8 +14,8 @@ class TestCase:
     @classmethod
     def from_json(cls, data: dict) -> "TestCase":
         return cls(
-            input=data.get("inputs"),
-            output=data.get("outputs")
+            inputs=data.get("inputs"),
+            outputs=data.get("outputs")
         )
 
 @dataclass

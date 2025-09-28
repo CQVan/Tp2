@@ -357,24 +357,38 @@ export default function MatchPage() {
             width={sidebarWidth}
             onResize={(w) => setSidebarWidth(w)}
           >
-              <h1 className="text-white text-lg font-bold m-4">{question ? question.title : 'Loading question...'}</h1>
-              <div className="text-gray-300 m-4">
-                {question ? (
-                  <>
-                    <p className="mb-4">{question.prompt}</p>
-                    <div className="mt-4">
-                      <h2 className="text-white font-bold mb-2">Test Cases:</h2>
-                      {question.test_cases.map((testCase, index) => (
-                        <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
-                          <div>Input: <code>{testCase.input}</code></div>
-                          <div>Output: <code>{testCase.output}</code></div>
+              <div className="flex flex-col h-full">
+                <h1 className="text-white text-lg font-bold p-4 border-b border-gray-700 flex-shrink-0">{question ? question.title : 'Loading question...'}</h1>
+                <div className="flex-1 overflow-y-auto">
+                  <div className="text-gray-300 p-4">
+                    {question ? (
+                      <>
+                        <p className="mb-4">{question.prompt}</p>
+                        <div className="mt-4">
+                          <h2 className="text-white font-bold mb-2">Test Cases:</h2>
+                          {question.test_cases.map((testCase, index) => (
+                            <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
+                              <div className="mb-2">
+                                <span className="text-gray-400">Input:</span>
+                                <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.input, null, 2)}</code>
+                                </pre>
+                              </div>
+                              <div>
+                                <span className="text-gray-400">Output:</span>
+                                <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
+                                  <code className="text-sm font-mono text-white">{JSON.stringify(testCase.output, null, 2)}</code>
+                                </pre>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  'Waiting for question...' 
-                )}
+                      </>
+                    ) : (
+                      'Waiting for question...' 
+                    )}
+                  </div>
+                </div>
               </div>
           </Sidebar>
           
