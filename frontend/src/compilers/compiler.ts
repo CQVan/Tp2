@@ -1,5 +1,3 @@
-import IsolatedVM from "isolated-vm";
-
 export interface RunResult{
     output : any;
     logs : string[];
@@ -27,38 +25,30 @@ abstract class Compiler {
 }
 
 class JavaScript extends Compiler {
-    async run(code: string, func: string, args: any[] = []): Promise<RunResult> {
-        const logs: string[] = [];
+  async run(code: string, func: string, args: any[] = []): Promise<RunResult> {
+    return new Promise((resolve) => {
+      const worker = new Worker("/js-worker.js");
 
-        // Create isolate
-        const isolate = new IsolatedVM.Isolate({ memoryLimit: 128 });
-        const context = await isolate.createContext();
-        const jail = context.global;
-
-        // Expose console.log
-        await jail.set('console', {
-            log: new IsolatedVM.Reference((...messages: any[]) => {
-                logs.push(messages.map(m => m?.toString() ?? '').join(' '));
-            })
+      // Set a 1-second timeout
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        resolve({
+          output: null,
+          logs: ["Error: Execution timed out after 1000ms"]
         });
+      }, 1000);
 
-        // Evaluate the user code in the isolate
-        await context.eval(code);
+      worker.onmessage = (e) => {
+        clearTimeout(timeout);
+        resolve(e.data);
+        worker.terminate();
+      };
 
-        try {
-            // Get a reference to the function
-            const fnRef = await context.eval(`typeof ${func} === 'function' ? ${func} : undefined`);
-            if (!fnRef) throw new Error(`Function "${func}" not found`);
-
-            // Call the function with args, with timeout
-            const result = await fnRef.apply(undefined, args.map(a => a), { timeout: 1000 });
-
-            return { output: result, logs };
-        } catch (e: any) {
-            return { output: null, logs: [...logs, `Error: ${e.message}`] };
-        }
-    }
+      worker.postMessage({ code, func, args });
+    });
+  }
 }
+
 
 class Python extends Compiler {
     async run(code: string, func: string, args?: any[], timeoutMs = 2000): Promise<RunResult> {

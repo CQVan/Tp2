@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 
 @dataclass
 class TestCase:
-    input: Any
-    output: Any
+    inputs: Any
+    outputs: Any
 
     @classmethod
     def from_json(cls, data: dict) -> "TestCase":
         return cls(
-            input=data.get("input"),
-            output=data.get("output")
+            input=data.get("inputs"),
+            output=data.get("outputs")
         )
 
 @dataclass
@@ -26,19 +26,6 @@ class Question:
     inital_code: Dict[str, str]
     target_func: str
     test_cases: List[TestCase]
-
-    @classmethod
-    def from_json(cls, data: dict) -> "Question":
-        test_cases_data = data.get("test_cases", [])
-        test_cases = [TestCase.from_json(tc) for tc in test_cases_data]
-        return cls(
-            title=data.get("title", ""),
-            prompt=data.get("prompt", ""),
-            difficulty=data.get("difficulty", 0),
-            inital_code=data.get("inital_code", {}),
-            target_func=data.get("target_func", ""),
-            test_cases=test_cases
-        )
 
     @classmethod
     def from_json(cls, data: dict) -> "Question":
@@ -104,8 +91,27 @@ def get_question() -> Question | None:
 
     return question
 
-def add_question(question : Question):
-    pass
+def add_question(question: Question):
+    """
+    Adds a Question object to the DynamoDB Questions table.
+    Assigns a new primary key (id) based on current item count.
+    """
+    # Generate a new primary key (id) based on current number of items
+    new_id = ___get_db_item_count()
+
+    # Convert Question object to a dict suitable for DynamoDB
+    item = {
+        'id': new_id,
+        'title': question.title,
+        'prompt': question.prompt,
+        'difficulty': question.difficulty,
+        'inital_code': question.inital_code,
+        'target_func': question.target_func,
+        'test_cases': [{'input': tc.input, 'output': tc.output} for tc in question.test_cases]
+    }
+
+    # Put the item into DynamoDB
+    table.put_item(Item=item)
 
 def ___get_db_item_count() -> int:
     response = dynamodb_client.describe_table(TableName="Questions")
