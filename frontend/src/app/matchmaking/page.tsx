@@ -60,11 +60,13 @@ export default function MatchmakingPage() {
     fetchUserData();
   }, []);
 
-  // CHANGE: Add a cleanup effect for the WebSocket connection
+  // Cleanup effect for the WebSocket connection
   useEffect(() => {
     // This function will be called when the component unmounts
     return () => {
-      if (ws.current) {
+      // Only close the WebSocket if we're not in a match
+      const sessionId = localStorage.getItem("session_id");
+      if (!sessionId && ws.current) {
         ws.current.close();
       }
     };
@@ -101,15 +103,9 @@ export default function MatchmakingPage() {
         localStorage.setItem("opponent", JSON.stringify(data.opponent));
         localStorage.setItem("role", data.role); // 'offerer' or 'answerer'
         localStorage.setItem("session_id", data.session_id);
-        // The WebSocket connection (ws.current) is kept alive for signaling.
-        
-        if (ws.current) {
-          ws.current.close();
-        }
-        // --------------------------------------------------------------------
-        // TODO: The WebRTC handshake logic will be triggered from here.
-        // For now, we'll just log it.
-        // console.log("Match Found! Ready to start WebRTC handshake.", data);
+        // Keep the WebSocket connection alive for signaling
+
+        // Navigate to the match page while keeping the connection open
         router.push(`/match/${data.session_id}`);
         // --------------------------------------------------------------------
       }

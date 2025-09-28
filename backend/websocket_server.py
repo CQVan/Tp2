@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from collections import deque
 import math
 from playerdb import get_player, create_player, update_player, Player
+from questiondb import get_question
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
@@ -223,8 +224,6 @@ class DynamicMatchmaker:
 config = ConfigManager()
 matchmaker = DynamicMatchmaker()
 manager = SignalingManager()
-# Track active session IDs
-active_sessions = set()
 
 # --- WebSockets Endpoints (Corrected) ---
 
@@ -304,3 +303,25 @@ async def websocket_endpoint(websocket: WebSocket):
         if userid:
             manager.disconnect(userid)
         matchmaker.remove_player(websocket)
+
+@app.get("/api/question")
+async def get_question_for_session(sessionid: str = Query(...)):
+    question = get_question()
+    if not question:
+        return JSONResponse(
+            {"success": False, "error": "No questions available"},
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    
+    return {
+        "success": True,
+        "question": {
+            "title": question.title,
+            "prompt": question.prompt,
+            "difficulty": question.difficulty,
+            "test_cases": [
+                {"input": tc.input, "output": tc.output}
+                for tc in question.test_cases
+            ]
+        }
+    }

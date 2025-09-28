@@ -62,6 +62,13 @@ dynamodb = boto3.resource(
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
 )
 
+dynamodb_client = boto3.client(
+    'dynamodb',
+    region_name=os.getenv("AWS_DEFAULT_REGION"),
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
+)
+
 table = dynamodb.Table('Questions')
 
 def get_question() -> Question | None:
@@ -97,7 +104,7 @@ def add_question(question : Question):
     pass
 
 def ___get_db_item_count() -> int:
-    response = dynamodb.describe_table(TableName="Questions")
+    response = dynamodb_client.describe_table(TableName="Questions")
     table_info = response['Table']
     
     item_count = table_info['ItemCount']      # Number of items
