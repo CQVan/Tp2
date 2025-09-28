@@ -59,7 +59,7 @@ dynamodb_client = boto3.client(
 table = dynamodb.Table('Questions')
 
 def get_question() -> Question | None:
-    num_questions = ___get_db_item_count()
+    num_questions = 100
     print(f"Number of questions in DB: {num_questions}")
 
     # if num_questions == 0:
@@ -67,7 +67,7 @@ def get_question() -> Question | None:
     #     return None
 
     # Pick a random primary key
-    target_question = 0
+    target_question = random.randint(0, num_questions - 1)
 
     # Get the question by primary key
     response = table.get_item(Key={'id': target_question})
