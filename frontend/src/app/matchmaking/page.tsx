@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useRouter } from 'next/navigation';
 
 // No changes needed for decodeJwtPayload helper function
 
@@ -25,11 +26,11 @@ export default function MatchmakingPage() {
   const [status, setStatus] = useState<string>("Click MATCHMAKE to enter the queue.");
   const [isQueueing, setIsQueueing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [matchFound, setMatchFound] = useState(false);
   // CHANGE: Use useRef to hold the WebSocket instance
   // This prevents it from being re-created on every render
   const ws = useRef<WebSocket | null>(null);
-
+  const router = useRouter();
   // This effect for fetching user data is fine, no changes needed here.
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -99,13 +100,14 @@ export default function MatchmakingPage() {
         // Store opponent details for the next step
         localStorage.setItem("opponent", JSON.stringify(data.opponent));
         localStorage.setItem("role", data.role); // 'offerer' or 'answerer'
-
+        localStorage.setItem("session_id", data.session_id);
         // The WebSocket connection (ws.current) is kept alive for signaling.
         
         // --------------------------------------------------------------------
         // TODO: The WebRTC handshake logic will be triggered from here.
         // For now, we'll just log it.
-        console.log("Match Found! Ready to start WebRTC handshake.", data);
+        // console.log("Match Found! Ready to start WebRTC handshake.", data);
+        router.push(`/match/${data.session_id}`);
         // --------------------------------------------------------------------
       }
     };
