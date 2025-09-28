@@ -234,37 +234,44 @@ active_sessions = set()
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     userid = None
-    
+    print("[WS] New connection attempt.")
     # FIX 1: Accept the connection IMMEDIATELY upon arrival.
     await websocket.accept()
     
     try:
         # Now that we've accepted, we can wait for the first message.
         initial_data = await websocket.receive_json()
+        print(f"[WS] Received initial data: {initial_data}")
         token = initial_data.get("token")
         
         token_payload = decode_token(token)
         if not token_payload["valid"]:
+            print("[WS] Invalid or expired token.")
             await websocket.close(code=4001, reason="Invalid or expired token.")
             return
 
         userid = token_payload["data"]["sub"]
+        print(f"[WS] Authenticated as {userid}")
         player = get_player(userid)
         if not player:
+            print(f"[WS] Player not found: {userid}")
             await websocket.close(code=4004, reason="Player not found.")
             return
             
         # FIX 2: Register the now-authenticated connection in the manager.
         manager.register(userid, websocket)
+        print(f"[WS] Registered {userid} for signaling.")
 
         # 2. ADD TO MATCHMAKING QUEUE (The rest of your logic is correct)
         match = matchmaker.add_player(player, websocket)
+        print(f"[WS] Added {userid} to matchmaking queue. Match: {bool(match)}")
         
         if match:
             # 3. MATCH FOUND
             (p1, ws1), (p2, ws2) = match
 
             session_id = secrets.token_urlsafe(8)
+            print(f"[WS] Match found! Session: {session_id} | {p1.id} vs {p2.id}")
             
             await ws1.send_json({
                 "event": "match_found",
@@ -272,6 +279,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "opponent": {"id": p2.id, "elo": int(p2.elo)},
                 "role": "offerer"
             })
+            print(f"[WS] Sent match_found to {p1.id}")
             
             await ws2.send_json({
                 "event": "match_found",
@@ -279,20 +287,23 @@ async def websocket_endpoint(websocket: WebSocket):
                 "opponent": {"id": p1.id, "elo": int(p1.elo)},
                 "role": "answerer"
             })
+            print(f"[WS] Sent match_found to {p2.id}")
         
         # 4. LISTEN FOR AND FORWARD SIGNALING MESSAGES
         while True:
             data = await websocket.receive_json()
+            print(f"[WS] {userid} sent signaling: {data}")
             event_type = data.get("event")
             if event_type in ["webrtc_offer", "webrtc_answer", "webrtc_ice_candidate"]:
                 await manager.forward_message(userid, data)
 
     except WebSocketDisconnect:
+        print(f"[WS] WebSocketDisconnect for {userid}")
         if userid:
             manager.disconnect(userid)
-            matchmaker.remove_player(websocket)
+        matchmaker.remove_player(websocket)
     except Exception as e:
-        print(f"An error occurred with user {userid}: {e}")
+        print(f"[WS] Exception for user {userid}: {e}")
         if userid:
             manager.disconnect(userid)
-            matchmaker.remove_player(websocket)
+        matchmaker.remove_player(websocket)

@@ -1,15 +1,81 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Editor, { OnMount } from "@monaco-editor/react";
 
+function getUserIdFromToken(token: string): string | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.sub;
+  } catch (e) {
+    return null;
+  }
+}
+
+function ChatPanel({ messages, onSendMessage, currentUser }: {
+  messages: any[];
+  onSendMessage: (message: string) => void;
+  currentUser: { userid: string } | null;
+}) {
+  const [chatInput, setChatInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // Auto-scroll to the latest message
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (chatInput.trim()) {
+      onSendMessage(chatInput);
+      setChatInput("");
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-gray-800 border-l-2 border-gray-700">
+      <h2 className="text-white font-bold p-3 border-b border-gray-700">Match Chat</h2>
+      <div className="flex-grow p-3 overflow-y-auto">
+        {messages.map((msg, index) => {
+          const isMe = msg.userid === currentUser?.userid;
+          return (
+            <div key={index} className={`mb-2 flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+              <div className={`p-2 rounded-lg max-w-xs ${isMe ? 'bg-blue-600' : 'bg-gray-600'}`}>
+                <p className="text-sm font-bold text-white">{isMe ? 'Me' : msg.userid}</p>
+                <p className="text-white text-base break-words">{msg.payload.message}</p>
+                <p className="text-xs text-gray-300 text-right mt-1">{new Date(msg.time).toLocaleTimeString()}</p>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+      <form onSubmit={handleFormSubmit} className="p-3 border-t border-gray-700">
+        <input
+          type="text"
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          placeholder="Type a message..."
+          className="w-full bg-gray-700 text-white p-2 rounded"
+        />
+      </form>
+    </div>
+  );
+}
+
 export default function MatchPage() {
+  const router = useRouter();
     // UI and Editor state
     const [sidebarWidth, setSidebarWidth] = useState(400);
     const [code, setCode] = useState<string>("// Your code here!");
     const editorRef = useRef<any>(null);
+
+    // NEW: State for current user and chat messages
+    const [currentUser, setCurrentUser] = useState<{ userid: string } | null>(null);
+    const [messages, setMessages] = useState<any[]>([]);
 
     // Network and Game State
     const [connectionStatus, setConnectionStatus] = useState("Initializing...");
@@ -19,51 +85,104 @@ export default function MatchPage() {
     const peerConnection = useRef<RTCPeerConnection | null>(null);
     const dataChannel = useRef<RTCDataChannel | null>(null);
 
+    // Add a state to track if P2P is established
+    const [isPeerConnected, setIsPeerConnected] = useState(false);
+
+    // Ref to store timeout for error handling
+    const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     // This is the main effect for all networking
-    useEffect(() => {
-        // 1. Retrieve match data from localStorage
-        const opponentData = JSON.parse(localStorage.getItem("opponent") || "{}");
-        const role = localStorage.getItem("role");
-        const token = localStorage.getItem("authToken");
+  useEffect(() => {
+    // 1. Retrieve match data from localStorage
+    const opponentData = JSON.parse(localStorage.getItem("opponent") || "{}");
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("authToken");
 
-        if (!opponentData.id || !role || !token) {
-            setConnectionStatus("Error: Missing match data.");
-            return;
-        }
+    if (!opponentData.id || !role || !token) {
+      setConnectionStatus("Error: Missing match data.");
+      return;
+    }
 
-        // 2. Connect to the signaling server
-        ws.current = new WebSocket("ws://127.0.0.1:8000/ws");
+    setCurrentUser({ userid: getUserIdFromToken(token)! });
 
-        ws.current.onopen = () => {
-            setConnectionStatus("Signaling server connected...");
-            // Authenticate this connection
-            ws.current?.send(JSON.stringify({ token }));
-            // Start the WebRTC handshake
-            initializePeerConnection(role, opponentData.id);
-        };
+    // 2. Connect to the signaling server
+    ws.current = new WebSocket("ws://127.0.0.1:8000/ws");
 
-        // 3. Listen for signaling messages
-        ws.current.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            handleSignalingData(message);
-        };
+    ws.current.onopen = () => {
+      setConnectionStatus("Signaling server connected...");
+      // Authenticate this connection
+      ws.current?.send(JSON.stringify({ token }));
+      // Start the WebRTC handshake
+      initializePeerConnection(role, opponentData.id);
+    };
 
-        // 4. Cleanup on component unmount
-        return () => {
-            ws.current?.close();
-            peerConnection.current?.close();
-        };
-    }, []); // Empty array ensures this runs only once
+    // 3. Listen for signaling messages
+    ws.current.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      handleSignalingData(message);
+    };
+
+    const handleConnectionLoss = () => {
+        setConnectionStatus("⚠️ Signaling connection lost");
+    };
+    // 4. Handle connection close/error: redirect to matchmaking
+    ws.current.onclose = handleConnectionLoss;
+    ws.current.onerror = handleConnectionLoss;
+
+    // 5. Cleanup on component unmount
+    return () => {
+      ws.current?.close();
+      peerConnection.current?.close();
+    };
+  }, []);
 
     // --- WebRTC Core Functions ---
 
     const initializePeerConnection = async (role: string, opponentId: string) => {
-        // Use public STUN servers for NAT traversal
         const pc = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
         });
         peerConnection.current = pc;
         setConnectionStatus("Creating P2P connection...");
+
+        // Modify the connection state handler in initializePeerConnection
+        pc.onconnectionstatechange = () => {
+            // Clear any existing timeout
+            if (errorTimeoutRef.current) {
+                clearTimeout(errorTimeoutRef.current);
+                errorTimeoutRef.current = null;
+            }
+
+            switch(pc.connectionState) {
+                case 'connected':
+                    setConnectionStatus("✅ P2P Connected");
+                    setIsPeerConnected(true);
+                    break;
+                case 'disconnected':
+                    setConnectionStatus("⚠️ Opponent disconnected");
+                    setIsPeerConnected(false);
+                    errorTimeoutRef.current = setTimeout(() => {
+                        if (pc.connectionState === 'disconnected') {
+                            router.push('/matchmaking');
+                        }
+                    }, 5000);
+                    break;
+                case 'failed':
+                    setConnectionStatus("❌ Connection lost - Opponent left the match");
+                    setIsPeerConnected(false);
+                    errorTimeoutRef.current = setTimeout(() => {
+                        if (pc.connectionState === 'failed') {
+                            router.push('/matchmaking');
+                        }
+                    }, 5000);
+                    break;
+                case 'connecting':
+                    setConnectionStatus("⏳ Establishing connection...");
+                    break;
+                default:
+                    setConnectionStatus(`Connection state: ${pc.connectionState}`);
+            }
+        };
 
         // Send any found network candidates to the other peer via the server
         pc.onicecandidate = (event) => {
@@ -117,66 +236,91 @@ export default function MatchPage() {
         }
     };
 
+    // MODIFIED: This function is now the core of our P2P communication
     const setupDataChannelEvents = (dc: RTCDataChannel) => {
         dc.onopen = () => {
-            setConnectionStatus("✅ P2P Connection Established!");
-            ws.current?.close(); // No longer need the signaling server
+            setConnectionStatus("✅ Data Channel Open");
         };
-        dc.onclose = () => setConnectionStatus("Connection closed.");
+
+        dc.onclose = () => {
+            setConnectionStatus("⚠️ Data Channel Closed");
+        };
+
         dc.onmessage = (event) => {
-            console.log("Opponent says:", event.data);
-            // TODO: Handle incoming messages (chat, game events, etc.)
+          const data = JSON.parse(event.data);
+          if (data.event === 'chat') {
+            setMessages((prevMessages) => [...prevMessages, data]);
+          }
         };
-    };
-  
+      };
     const sendSignal = (data: any) => {
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(data));
         }
     };
 
+    // NEW: Function to handle sending a chat message
+    const handleSendMessage = (messageText: string) => {
+      if (dataChannel.current?.readyState === 'open' && currentUser) {
+        const message = {
+          userid: currentUser.userid,
+          event: 'chat',
+          payload: {
+            message: messageText,
+          },
+          time: new Date().toISOString(),
+        };
+        
+        // Send the message over the data channel
+        dataChannel.current.send(JSON.stringify(message));
+
+        // Add the message to our own chat window immediately
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
+    };
+    
     // Your existing editor functions...
     const handleEditorMount: OnMount = (editor) => { editorRef.current = editor; };
     useEffect(() => { editorRef.current?.layout(); }, [sidebarWidth]);
 
     return (
-        <div>
-            <div className="flex justify-center gap-4">
-                {/* You can show the status for debugging */}
-                <p className="font-bold">{connectionStatus}</p>
-                <button>Run</button>
-                <button>Submit</button>
+        <div className="flex h-screen bg-gray-900">
+          {/* Left Panel: Problem Description */}
+          <Sidebar
+            minWidth={150}
+            maxWidth={600}
+            width={sidebarWidth}
+            onResize={(w) => setSidebarWidth(w)}
+          >
+              <h1 className="text-white text-lg font-bold m-4">Title</h1>
+              <p className="text-gray-300 m-4">Prompt goes here</p>
+          </Sidebar>
+          
+          {/* Center Panel: Code Editor */}
+          <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${sidebarWidth}px - 350px)` }}>
+            <div className="p-2 bg-gray-800 text-center text-white font-bold">{connectionStatus}</div>
+            <div className="flex gap-2 p-2 bg-gray-800 justify-end">
+              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Submit</button>
+              <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
             </div>
-            <div className="flex h-screen">
-                <Sidebar
-                    minWidth={150}
-                    maxWidth={500}
-                    width={sidebarWidth}
-                    onResize={(w) => setSidebarWidth(w)}
-                >
-                    <h1 className="text-white text-lg font-bold m-4">Title</h1>
-                    <p className="text-gray-300 m-4">Prompt goes here</p>
-                </Sidebar>
-                <div className="flex-1" style={{ width: `calc(100% - ${sidebarWidth}px)` }}>
-                    <div>
-                        <select
-                            className="bg-gray-800 text-white rounded px-2 py-1 mb-2"
-                            onChange={(e) => {/* Optionally set language state here if you want to support multiple languages */}}
-                            defaultValue="javascript"
-                        >
-                            <option value="javascript">JavaScript</option>
-                            <option value="python">Python</option>
-                        </select>
-                    </div>
-                    <Editor
-                        height="100%"
-                        language={"javascript"}
-                        value={code}
-                        onChange={(value) => setCode(value || "")}
-                        onMount={handleEditorMount}
-                    />
-                </div>
-            </div>
+            <Editor
+              height="100%"
+              language={"javascript"}
+              theme="vs-dark"
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              onMount={(editor) => { editorRef.current = editor; }}
+            />
+          </div>
+
+          {/* NEW: Right Panel: Chat */}
+          <div className="w-[350px]">
+            <ChatPanel
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              currentUser={currentUser}
+            />
+          </div>
         </div>
     );
 }
