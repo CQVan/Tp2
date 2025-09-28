@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import os
-from typing import Any, List
+from typing import Any, Dict, List
 import boto3
 import random
 
@@ -11,15 +11,47 @@ class TestCase:
     input: Any
     output: Any
 
+    @classmethod
+    def from_json(cls, data: dict) -> "TestCase":
+        return cls(
+            input=data.get("input"),
+            output=data.get("output")
+        )
+
 @dataclass
 class Question:
     title: str
-    prompt : str
+    prompt: str
     difficulty: int
-
-    inital_code: dict
+    inital_code: Dict[str, str]
     target_func: str
     test_cases: List[TestCase]
+
+    @classmethod
+    def from_json(cls, data: dict) -> "Question":
+        test_cases_data = data.get("test_cases", [])
+        test_cases = [TestCase.from_json(tc) for tc in test_cases_data]
+        return cls(
+            title=data.get("title", ""),
+            prompt=data.get("prompt", ""),
+            difficulty=data.get("difficulty", 0),
+            inital_code=data.get("inital_code", {}),
+            target_func=data.get("target_func", ""),
+            test_cases=test_cases
+        )
+
+    @classmethod
+    def from_json(cls, data: dict) -> "Question":
+        test_cases_data = data.get("test_cases", [])
+        test_cases = [TestCase.from_json(tc) for tc in test_cases_data]
+        return cls(
+            title=data.get("title", ""),
+            prompt=data.get("prompt", ""),
+            difficulty=data.get("difficulty", 0),
+            inital_code=data.get("inital_code", {}),
+            target_func=data.get("target_func", ""),
+            test_cases=test_cases
+        )
 
 load_dotenv()
 
@@ -67,6 +99,9 @@ def get_question() -> Question | None:
         question.test_cases.append(test_case)
 
     return question
+
+def add_question(question : Question):
+    pass
 
 def ___get_db_item_count() -> int:
     response = dynamodb_client.describe_table(TableName="Questions")
