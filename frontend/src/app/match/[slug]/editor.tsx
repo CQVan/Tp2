@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { get_compiler, RunResult } from "@/compilers/compiler";
+import { LoadingScreen } from "./page";
 
 interface Question {
   title: string;
@@ -92,11 +93,11 @@ export default function MatchPage() {
 
     // NEW: State for current user and chat messages
     const [currentUser, setCurrentUser] = useState<{ userid: string } | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [question, setQuestion] = useState<Question | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
-  const [opponentId, setOpponentId] = useState<string | null>(null);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [question, setQuestion] = useState<Question | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [role, setRole] = useState<string | null>(null);
+    const [opponentId, setOpponentId] = useState<string | null>(null);
 
     // Network and Game State
   const [connectionStatus, setConnectionStatus] = useState("Initializing...");
@@ -579,6 +580,8 @@ export default function MatchPage() {
 
     return (
         <div className="flex h-screen bg-gray-900">
+          {isPeerConnected ? null : <LoadingScreen status={connectionStatus}/>}
+
           {/* Left Panel: Problem Description */}
           <Sidebar
             minWidth={150}
@@ -623,7 +626,6 @@ export default function MatchPage() {
           
           {/* Center Panel: Code Editor + Resizable Terminal */}
           <div className="flex-1 flex flex-col min-h-0" style={{ width: `calc(100% - ${sidebarWidth}px - 350px)` }}>
-            <div className="p-2 bg-gray-800 text-center text-white font-bold">{connectionStatus}</div>
             <div className="flex gap-2 p-2 bg-gray-800 justify-end">
               <select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-gray-900 text-white p-1 rounded">
                 <option value={"javascript"}>JavaScript</option>
