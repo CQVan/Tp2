@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 import os
+import random
 from typing import Any, Dict, List
 import boto3
 
@@ -75,7 +76,7 @@ dynamodb_client = boto3.client(
 table = dynamodb.Table('Questions')
 
 def get_question() -> Question | None:
-    num_questions = 100
+    num_questions = 90
     print(f"Number of questions in DB: {num_questions}")
 
     # if num_questions == 0:
@@ -87,23 +88,30 @@ def get_question() -> Question | None:
 
     # Get the question by primary key
     response = table.get_item(Key={'id': target_question})
+    print(response)
     item = response.get('Item')
     if not item:
         print("Warning: Question not found in database.")
         return None
 
     # Convert DynamoDB item to Question object
-    question = Question.from_json(item)
-    # question.title = item.get('title', '')
-    # question.prompt = item.get('prompt', '')
-    # question.difficulty = int(item.get('difficulty', 0))
-    # question.test_cases = []
+    # Convert DynamoDB item to Question object
+    test_cases = []
+    for tc in item.get('test_cases', []):
+        test_case = TestCase(
+            inputs=tc.get('inputs'),
+            outputs=tc.get('outputs')
+        )
+        test_cases.append(test_case)
 
-    # for tc in item.get('test_cases', []):
-    #     test_case = TestCase()
-    #     test_case.input = tc.get('input')
-    #     test_case.output = tc.get('output')
-    #     question.test_cases.append(test_case)
+    question = Question(
+        title=item.get('title', ''),
+        prompt=item.get('prompt', ''),
+        difficulty=int(item.get('difficulty', 0)),
+        initial_code=item.get('initial_code', {}),
+        target_func=item.get('target_func', ''),
+        test_cases=test_cases
+    )
 
     return question
 
