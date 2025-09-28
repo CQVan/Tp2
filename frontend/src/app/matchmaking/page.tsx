@@ -45,7 +45,7 @@ export default function MatchmakingPage() {
     }
     const fetchUserData = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/getUserById?userid=${payload.sub}`);
+        const res = await fetch(`${process.env.BACKEND_URL}/getUserById?userid=${payload.sub}`);
         if (!res.ok) throw new Error("Failed to fetch user data.");
         const data = await res.json();
         if (data.success) {
@@ -83,7 +83,7 @@ export default function MatchmakingPage() {
     setStatus("Connecting...");
 
     // CHANGE: Connect to the new single endpoint
-    ws.current = new WebSocket("ws://127.0.0.1:8000/ws");
+    ws.current = new WebSocket(`ws://${process.env.BACKEND_URL?.replace('http://', '')}/ws`);
 
     ws.current.onopen = () => {
       setStatus("In queue, waiting for an opponent...");
