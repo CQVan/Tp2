@@ -115,9 +115,17 @@ export default function MatchPage() {
 
     setCurrentUser({ userid: getUserIdFromToken(token)! });
 
-    // 2. Connect to the signaling server
-    ws.current = new WebSocket("ws://127.0.0.1:8000/ws");
+    const isSecure = window.location.protocol === 'https:';
+    const protocol = isSecure ? 'wss://' : 'ws://';
+    // NOTE: This assumes your NEXT_PUBLIC_BACKEND_URL is set correctly in Vercel/Netlify
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/^(http|https):\/\//, '');
 
+    if (!backendUrl) {
+        setConnectionStatus("Error: Backend URL not configured.");
+        return;
+    }
+
+    ws.current = new WebSocket(`${protocol}${backendUrl}/ws`);
     ws.current.onopen = () => {
       setConnectionStatus("Signaling server connected...");
       // Authenticate this connection
