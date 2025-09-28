@@ -16,6 +16,9 @@ class Question:
     title: str
     prompt : str
     difficulty: int
+
+    inital_code: dict
+    target_func: str
     test_cases: List[TestCase]
 
 load_dotenv()
