@@ -148,7 +148,7 @@ function RegisterForm() {
 
     //password length
     if (password.length <= 7){
-    setError("Password too short")
+    setError("Password too short should be more than 7 charactor")
     return;
     }
     //password capital letter
