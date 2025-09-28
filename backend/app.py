@@ -111,7 +111,7 @@ async def get_user_by_id(userid: str = Query(...)):
         "elo": player.elo
     }
 
-@app.post("/update-elo")
+@app.post("/users/elo")
 async def update_elo(request: Request):
     data = await request.json()
     userid = data.get("userid")
@@ -251,7 +251,7 @@ async def websocket_endpoint(websocket: WebSocket):
         player = get_player(userid)
         if not player:
             print(f"[WS] Player not found: {userid}")
-            await websocket.close(code=4004, reason="Player not found.")
+            await websocket.close(code=404, reason="Player not found.")
             return
             
         # FIX 2: Register the now-authenticated connection in the manager.
@@ -304,7 +304,7 @@ async def websocket_endpoint(websocket: WebSocket):
             manager.disconnect(userid)
         matchmaker.remove_player(websocket)
 
-@app.get("/api/question")
+@app.get("/question")
 async def get_question_for_session(sessionid: str = Query(...)):
     question = get_question()
     if not question:

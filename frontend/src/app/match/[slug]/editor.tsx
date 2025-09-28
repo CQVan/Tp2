@@ -426,8 +426,8 @@ export default function MatchPage() {
       try {
         const base = process.env.NEXT_PUBLIC_BACKEND_URL;
         if (base && sessionId) {
-          await fetch(`${base}/update-elo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: winner, sessionid: sessionId, win: true }) });
-          await fetch(`${base}/update-elo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: finalLoser, sessionid: sessionId, win: false }) });
+          await fetch(`${base}/users/elo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: winner, sessionid: sessionId, win: true }) });
+          await fetch(`${base}/users/elo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userid: finalLoser, sessionid: sessionId, win: false }) });
         }
       } catch (e) {
         appendTerminal(`ELO update failed: ${String(e)}`);
@@ -454,7 +454,7 @@ export default function MatchPage() {
       if (!sessionId) return;
   
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/question?sessionid=${sessionId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/question?sessionid=${sessionId}`);
         const data = await response.json();
         
         if (data.success && data.question) {
