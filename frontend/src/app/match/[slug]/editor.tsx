@@ -285,6 +285,14 @@ export default function MatchPage() {
           } else if (data.event === 'question_data') {
             console.log(data.payload as Question);
             setQuestion(data.payload as Question);
+          } else if (data.event === 'give_up') {
+            // Opponent has given up; navigate back to matchmaking
+            setConnectionStatus('Opponent left the match. Returning to matchmaking...');
+            // Close our connections gracefully
+            try { dataChannel.current?.close(); } catch {}
+            try { peerConnection.current?.close(); } catch {}
+            try { ws.current?.close(); } catch {}
+            setTimeout(() => router.push('/matchmaking'), 500);
           }
         };
       };
@@ -292,6 +300,30 @@ export default function MatchPage() {
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(data));
         }
+    };
+
+    // Handle Give Up action: notify peer (best-effort), close all connections, and navigate away
+    const handleGiveUp = () => {
+      // Try to notify peer
+      try {
+        if (dataChannel.current?.readyState === 'open') {
+          dataChannel.current.send(JSON.stringify({ event: 'give_up' }));
+        }
+      } catch {}
+
+      // Close connections
+      try { dataChannel.current?.close(); } catch {}
+      try { peerConnection.current?.close(); } catch {}
+      try { ws.current?.close(); } catch {}
+
+      // Clear any pending timeouts
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+        errorTimeoutRef.current = null;
+      }
+
+      setConnectionStatus('You left the match.');
+      router.push('/matchmaking');
     };
 
     // NEW: Function to handle sending a chat message
@@ -451,7 +483,7 @@ export default function MatchPage() {
               </select>
               <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Test</button>
               <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Submit</button>
-              <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
+              <button onClick={handleGiveUp} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
             </div>
             {/* Content area with editor and resizable terminal */}
             <div className="flex-1 flex flex-col min-h-0">
