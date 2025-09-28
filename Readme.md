@@ -35,5 +35,4 @@ A real-time competitive coding platform where developers can go head-to-head in 
 ### User Interface
 - 🎨 Modern, responsive design using shadcn/ui
 - 🌓 Dark/light theme support
-- 📱 Mobile-friendly layout
 - ⚡ Fast, fluid navigation with Next.js

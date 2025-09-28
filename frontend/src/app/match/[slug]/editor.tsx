@@ -513,28 +513,55 @@ export default function MatchPage() {
       }));
     }
 
-    async function run_cases(amt : number | undefined = undefined){
-      if(!question) throw "missing question"
-      const compiler = get_compiler(language);
-      
-      for(let i = 0 ; i < (amt ?? question?.test_cases.length); i++){
-        const inputs = question.test_cases[i].inputs;  
-        const result : RunResult = await compiler.run(code[language], question.target_func, inputs);
-
-        setTerminalLines(result.logs);
-        if(!result.output){ // error in code
-          return {}
-        }
-
-        const outputs = question.test_cases[i].outputs;
-        if(outputs !== result.output){ // not expected output
-          
-        }
-
-        
+    function areArraysEquivalent(arr1: string | any[], arr2: string | any[]) {
+      if (!Array.isArray(arr1) || !Array.isArray(arr2) || arr1.length !== arr2.length) {
+        return false;
       }
+      // Create sorted copies to compare
+      const sortedArr1 = [...arr1].sort();
+      const sortedArr2 = [...arr2].sort();
+      return JSON.stringify(sortedArr1) === JSON.stringify(sortedArr2);
     }
 
+    async function run_tests(language: string, user_code: { [x: string]: string; }, question: { test_cases: any[]; target_func: string; }) {
+      appendTerminal(`--- Running tests for ${language} ---`);
+      let passed_count = 0;
+      const compiler = get_compiler(language);
+      const total_cases = question.test_cases.length;
+
+      for (let i = 0; i < total_cases; i++) {
+        const test_case = question.test_cases[i];
+        const inputs = (test_case.inputs ?? test_case.input) as any;
+        const outputsExpected = (test_case.outputs ?? test_case.output) as any;
+        const inputs_as_array = Array.isArray(inputs) ? inputs : Object.values(inputs ?? {});
+
+        appendTerminal("");
+        appendTerminal(`Case ${i + 1}/${total_cases} - Inputs: ${JSON.stringify(inputs_as_array)}`);
+
+        const result = await compiler.run(
+          user_code[language],
+          question.target_func,
+          inputs_as_array
+        );
+
+        // Append any console logs captured from top-level and function execution
+        if (result.logs?.length) {
+          result.logs.forEach((l) => appendTerminal(l));
+        }
+
+        const pass = areArraysEquivalent(result.output, outputsExpected);
+        appendTerminal(
+          pass
+            ? `✅ Passed | Output: ${JSON.stringify(result.output)}`
+            : `❌ Failed | Expected: ${JSON.stringify(outputsExpected)} | Got: ${JSON.stringify(result.output)}`
+        );
+        if (pass) passed_count++;
+      }
+
+      appendTerminal("");
+      appendTerminal(`--- Results: Passed ${passed_count}/${total_cases} ---`);
+      return { passed_count, total_cases };
+    }
     return (
         <div className="flex h-screen bg-gray-900">
           {/* Left Panel: Problem Description */}
@@ -587,7 +614,21 @@ export default function MatchPage() {
                 <option value={"javascript"}>JavaScript</option>
                 <option value={"python"}>Python</option>
               </select>
-              <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded">Test</button>
+              <button
+                onClick={async () => {
+                  if (!question) return;
+                  try {
+                    appendTerminal(`Running tests for ${language}...`);
+                    const res = await run_tests(language, code, question);
+                    appendTerminal(`Results: Passed ${res.passed_count}/${res.total_cases}`);
+                  } catch (e) {
+                    appendTerminal(`Test run failed: ${String(e)}`);
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
+              >
+                Test
+              </button>
               <button
                 onClick={() => {
                   if (!currentUser || !matchStartTime || !sessionId) return;

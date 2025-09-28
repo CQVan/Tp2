@@ -27,7 +27,8 @@ abstract class Compiler {
 class JavaScript extends Compiler {
   async run(code: string, func: string, args: any): Promise<RunResult> {
     return new Promise((resolve) => {
-      const worker = new Worker("/js-worker.js");
+            // Use bundler-friendly worker URL to avoid 404s
+            const worker = new Worker(new URL('./jsworker.js', import.meta.url));
 
       // Set a 1-second timeout
       const timeout = setTimeout(() => {
@@ -53,53 +54,79 @@ class JavaScript extends Compiler {
 class Python extends Compiler {
     async run(code: string, func: string, args?: any): Promise<RunResult> {
         if (typeof window === 'undefined') {
-            throw new Error("Python sandbox can only run in the browser (client-side)");
+            throw new Error('Python sandbox can only run in the browser (client-side)');
         }
 
-        // Load Brython if not already loaded
-        if (!(window as any).__BRYTHON__) {
-            await new Promise<void>((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/brython@3.10.5/brython.min.js';
-                script.onload = () => {
-                    (window as any).brython(); // initialize Brython
-                    resolve();
-                };
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        }
-
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => {
-            logs.push(args.join(' '));
-            originalLog.apply(console, args);
+        // Lazy-load Pyodide once
+        const ensurePyodide = async () => {
+            const w = window as any;
+            if (w.__pyodide) return w.__pyodide;
+            if (!w.__pyodideLoading) {
+                w.__pyodideLoading = new Promise(async (resolve, reject) => {
+                    try {
+                        await new Promise<void>((res, rej) => {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+                            script.onload = () => res();
+                            script.onerror = rej;
+                            document.head.appendChild(script);
+                        });
+                        const pyodide = await (window as any).loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' });
+                        w.__pyodide = pyodide;
+                        resolve(pyodide);
+                    } catch (e) { reject(e); }
+                });
+            }
+            return w.__pyodideLoading;
         };
 
-        const executeCode = () => new Promise<RunResult>((resolve) => {
-            let output: any = null;
-            try {
-                // Load the user code
-                (window as any).__BRYTHON__.run_script(code);
+        const pyodide = await ensurePyodide();
 
-                // Call the specified function with arguments
-                output = (window as any).__BRYTHON__.builtins[func](...(args || []));
-            } catch (err: any) {
-                logs.push(err.toString());
-                output = null;
-            } finally {
-                console.log = originalLog;
+        // Prepare environment and capture stdout/stderr. Use exec to evaluate user code safely.
+        try {
+            pyodide.globals.set('__user_code', code);
+            pyodide.globals.set('__js_args', args || []);
+            const jsonStr: string = await pyodide.runPythonAsync(`
+import sys, io, json
+__ns = {}
+__buf = io.StringIO()
+__old_out, __old_err = sys.stdout, sys.stderr
+sys.stdout, sys.stderr = __buf, __buf
+__compile_err = None
+try:
+    exec(__user_code, __ns)
+except Exception as e:
+    __compile_err = str(e)
+__func = __ns.get('${func}')
+__result = None
+__call_err = None
+try:
+    if callable(__func):
+        __result = __func(*__js_args)
+    else:
+        __call_err = 'Function not found'
+except Exception as e:
+    __call_err = str(e)
+__out = __buf.getvalue()
+sys.stdout, sys.stderr = __old_out, __old_err
+json.dumps({'result': __result, 'stdout': __out, 'compile_error': __compile_err, 'call_error': __call_err})
+            `);
+
+            let parsed: any;
+            try { parsed = JSON.parse(jsonStr); } catch { parsed = { result: null, stdout: '', compile_error: 'Invalid JSON', call_error: null }; }
+            const logs: string[] = [];
+            if (parsed.stdout) {
+                // split into lines while keeping content
+                parsed.stdout.split(/\r?\n/).forEach((line: string) => { if (line.length) logs.push(line); });
             }
-            resolve({ output, logs });
-        });
-
-        // Run the code with timeout
-        return Promise.race([
-            executeCode(),
-            new Promise<RunResult>((resolve) => {
-                setTimeout(() => resolve({ output: null, logs: [...logs, 'Execution timed out'] }), 2000);
-            })
-        ]);
+            if (parsed.compile_error) logs.push(`Compile error: ${parsed.compile_error}`);
+            if (parsed.call_error) logs.push(`Runtime error: ${parsed.call_error}`);
+            return { output: parsed.result, logs };
+        } catch (e: any) {
+            return { output: null, logs: [String(e?.message || e)] };
+        } finally {
+            try { pyodide.globals.del('__user_code'); } catch {}
+            try { pyodide.globals.del('__js_args'); } catch {}
+        }
     }
 }
