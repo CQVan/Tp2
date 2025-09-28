@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Editor, { OnMount } from "@monaco-editor/react";
 
+interface Question {
+  title: string;
+  prompt: string;
+  difficulty: string;
+  test_cases: { input: string; output: string; }[];
+}
+
 function getUserIdFromToken(token: string): string | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -76,6 +83,7 @@ export default function MatchPage() {
     // NEW: State for current user and chat messages
     const [currentUser, setCurrentUser] = useState<{ userid: string } | null>(null);
     const [messages, setMessages] = useState<any[]>([]);
+    const [question, setQuestion] = useState<Question | null>(null);
 
     // Network and Game State
     const [connectionStatus, setConnectionStatus] = useState("Initializing...");
@@ -229,8 +237,13 @@ export default function MatchPage() {
                 await pc.setRemoteDescription(new RTCSessionDescription(message.data));
                 break;
             case "webrtc_ice_candidate":
-                if (message.data) {
-                    await pc.addIceCandidate(new RTCIceCandidate(message.data));
+                try {
+                    // Only create and add ICE candidate if there's actual candidate data
+                    if (message.data && message.data.candidate) {
+                        await pc.addIceCandidate(new RTCIceCandidate(message.data));
+                    }
+                } catch (error) {
+                    console.error("Error adding ICE candidate:", error);
                 }
                 break;
         }
@@ -240,6 +253,11 @@ export default function MatchPage() {
     const setupDataChannelEvents = (dc: RTCDataChannel) => {
         dc.onopen = () => {
             setConnectionStatus("✅ Data Channel Open");
+            const role = localStorage.getItem("role");
+            if (role === "offerer") {
+                // Caller fetches and shares the question
+                fetchAndShareQuestion();
+            }
         };
 
         dc.onclose = () => {
@@ -250,6 +268,8 @@ export default function MatchPage() {
           const data = JSON.parse(event.data);
           if (data.event === 'chat') {
             setMessages((prevMessages) => [...prevMessages, data]);
+          } else if (data.event === 'question_data') {
+            setQuestion(data.payload);
           }
         };
       };
@@ -278,7 +298,31 @@ export default function MatchPage() {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
     };
-    
+
+    const fetchAndShareQuestion = async () => {
+      const sessionId = localStorage.getItem("session_id");
+      if (!sessionId) return;
+  
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/question?sessionid=${sessionId}`);
+        const data = await response.json();
+        
+        if (data.success && data.question) {
+          setQuestion(data.question);
+          
+          // If we're the offerer, share the question with the opponent
+          if (dataChannel.current?.readyState === 'open') {
+            dataChannel.current.send(JSON.stringify({
+              event: 'question_data',
+              payload: data.question
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch question:", error);
+      }
+    };
+
     // Your existing editor functions...
     const handleEditorMount: OnMount = (editor) => { editorRef.current = editor; };
     useEffect(() => { editorRef.current?.layout(); }, [sidebarWidth]);
@@ -292,8 +336,25 @@ export default function MatchPage() {
             width={sidebarWidth}
             onResize={(w) => setSidebarWidth(w)}
           >
-              <h1 className="text-white text-lg font-bold m-4">Title</h1>
-              <p className="text-gray-300 m-4">Prompt goes here</p>
+              <h1 className="text-white text-lg font-bold m-4">{question ? question.title : 'Loading question...'}</h1>
+              <div className="text-gray-300 m-4">
+                {question ? (
+                  <>
+                    <p className="mb-4">{question.prompt}</p>
+                    <div className="mt-4">
+                      <h2 className="text-white font-bold mb-2">Test Cases:</h2>
+                      {question.test_cases.map((testCase, index) => (
+                        <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
+                          <div>Input: <code>{testCase.input}</code></div>
+                          <div>Output: <code>{testCase.output}</code></div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  'Waiting for question...' 
+                )}
+              </div>
           </Sidebar>
           
           {/* Center Panel: Code Editor */}
