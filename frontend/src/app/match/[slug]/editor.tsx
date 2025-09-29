@@ -6,6 +6,7 @@ import Sidebar from "@/components/sidebar";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { get_compiler, RunResult } from "@/compilers/compiler";
 import { LoadingScreen } from "./page";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 interface Question {
   title: string;
@@ -579,128 +580,144 @@ export default function MatchPage() {
     }
 
     return (
-        <div className="flex h-screen bg-gray-900">
-          {isPeerConnected ? null : <LoadingScreen status={connectionStatus}/>}
-
-          {/* Left Panel: Problem Description */}
-          <Sidebar
-            minWidth={150}
-            maxWidth={600}
-            width={sidebarWidth}
-            onResize={(w) => setSidebarWidth(w)}
-          >
-              <div className="flex flex-col h-full">
-                <h1 className="text-white text-lg font-bold p-4 border-b border-gray-700 flex-shrink-0">{question ? question.title : 'Loading question...'}</h1>
-                <div className="flex-1 overflow-y-auto">
-                  <div className="text-gray-300 p-4">
-                    {question ? (
-                      <>
-                        <p className="mb-4">{question.prompt}</p>
-                        <div className="mt-4">
-                          <h2 className="text-white font-bold mb-2">Test Cases:</h2>
-                          {question.test_cases.slice(0, 2).map((testCase, index) => (
-                              <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
-                                <div className="mb-2">
-                                  <span className="text-gray-400">Input:</span>
-                                  <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                    <code className="text-sm font-mono text-white">{JSON.stringify(testCase.inputs)}</code>
-                                  </pre>
-                                </div>
-                                <div>
-                                  <span className="text-gray-400">Output:</span>
-                                  <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
-                                    <code className="text-sm font-mono text-white">{JSON.stringify(testCase.outputs)}</code>
-                                  </pre>
-                                </div>
-                              </div>
-                            ))}
+    <div className="h-screen bg-gray-900 flex">
+      <PanelGroup
+        direction="horizontal"
+        className="flex-1"        // stretch to full width
+      >
+        {/* Left Panel: Problem Description */}
+        <Panel
+          minSize={0.1}
+          maxSize={40}
+          className="flex flex-col overflow-hidden"
+        >
+          <div className="flex flex-col h-full">
+            <h1 className="text-white text-lg font-bold p-4 border-b border-gray-700 flex-shrink-0">
+              {question ? question.title : "Loading question..."}
+            </h1>
+            <div className="flex-1 overflow-y-auto text-gray-300 p-4">
+              {question ? (
+                <>
+                  <p className="mb-4">{question.prompt}</p>
+                  <div className="mt-4">
+                    <h2 className="text-white font-bold mb-2">Test Cases:</h2>
+                    {question.test_cases.slice(0, 2).map((testCase, index) => (
+                      <div key={index} className="mb-2 p-2 bg-gray-800 rounded">
+                        <div className="mb-2">
+                          <span className="text-gray-400">Input:</span>
+                          <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
+                            <code className="text-sm font-mono text-white">
+                              {JSON.stringify(testCase.inputs)}
+                            </code>
+                          </pre>
                         </div>
-                      </>
-                    ) : (
-                      'Waiting for question...' 
-                    )}
+                        <div>
+                          <span className="text-gray-400">Output:</span>
+                          <pre className="mt-1 p-2 bg-gray-900 rounded overflow-x-auto">
+                            <code className="text-sm font-mono text-white">
+                              {JSON.stringify(testCase.outputs)}
+                            </code>
+                          </pre>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </div>
-          </Sidebar>
-          
-          {/* Center Panel: Code Editor + Resizable Terminal */}
-          <div className="flex-1 flex flex-col min-h-0" style={{ width: `calc(100% - ${sidebarWidth}px - 350px)` }}>
-            <div className="flex gap-2 p-2 bg-gray-800 justify-end">
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="bg-gray-900 text-white p-1 rounded">
-                <option value={"javascript"}>JavaScript</option>
-                <option value={"python"}>Python</option>
-              </select>
-              <button
-                onClick={async () => {
-                  if (!question) return;
-                  try {
-                    appendTerminal(`Running tests for ${language}...`);
-                    const res = await run_tests(question, 2);
-                    appendTerminal(`Results: Passed ${res.passed_count}/${res.total_cases}`);
-                  } catch (e) {
-                    appendTerminal(`Test run failed: ${String(e)}`);
-                  }
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
-              >
-                Test
-              </button>
-              <button
-                onClick={() => on_submit_code()}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
-              >
-                Submit
-              </button>
-              <button onClick={handleGiveUp} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded">Give Up</button>
+                </>
+              ) : (
+                "Waiting for question..."
+              )}
             </div>
-            {/* Content area with editor and resizable terminal */}
-            <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 min-h-0">
-                <Editor
-                  height="100%"
-                  language={language}
-                  theme="vs-dark"
-                  value={code[language]}
-                  onChange={(value) => update_code(value)}
-                  onMount={(editor) => { editorRef.current = editor; }}
-                />
-              </div>
-              {/* Drag handle */}
-              <div
-                className="h-2 bg-gray-700 hover:bg-gray-600 cursor-ns-resize select-none"
-                onMouseDown={startResize}
-                title="Drag to resize terminal"
-              />
-              {/* Terminal Pane */}
-              <div
-                className="bg-black text-green-400 overflow-y-auto border-t border-gray-700"
-                style={{ height: `${terminalHeight}px` }}
-              >
-                <div className="p-2 font-mono text-sm whitespace-pre-wrap break-words">
-                  <div className="mb-2 text-gray-300">
-                    Time remaining: {formatTime(remainingMs)}
-                  </div>
-                  {terminalLines.length === 0 ? (
-                    <span className="text-gray-400">Terminal is empty.</span>
-                  ) : (
-                    terminalLines.map((line, idx) => (
-                      <div key={idx}>{line}</div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+          </div>
+        </Panel>
+
+        <PanelResizeHandle className="bg-gray-700 w-1 hover:bg-gray-600 cursor-col-resize" />
+
+        {/* Center Panel: Editor + Terminal */}
+        <Panel className="flex flex-col min-h-0"> 
+          {/* Top toolbar */}
+          <div className="flex gap-2 p-2 bg-gray-800 justify-end">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-gray-900 text-white p-1 rounded"
+            >
+              <option value={"javascript"}>JavaScript</option>
+              <option value={"python"}>Python</option>
+            </select>
+            <button
+              onClick={async () => {
+                if (!question) return;
+                try {
+                  appendTerminal(`Running tests for ${language}...`);
+                  const res = await run_tests(question, 2);
+                  appendTerminal(`Results: Passed ${res.passed_count}/${res.total_cases}`);
+                } catch (e) {
+                  appendTerminal(`Test run failed: ${String(e)}`);
+                }
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
+            >
+              Test
+            </button>
+            <button
+              onClick={() => on_submit_code()}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
+            >
+              Submit
+            </button>
+            <button
+              onClick={handleGiveUp}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-4 rounded"
+            >
+              Give Up
+            </button>
           </div>
 
-          {/* NEW: Right Panel: Chat */}
-          <div className="w-[350px]">
-            <ChatPanel
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              currentUser={currentUser}
-            />
-          </div>
-        </div>
-    );
+          {/* Editor + Terminal split vertically */}
+          <PanelGroup direction="vertical" className="flex-1 min-h-0">
+            {/* Editor pane */}
+            <Panel className="min-h-0">
+              <Editor
+                height="100%"
+                language={language}
+                theme="vs-dark"
+                value={code[language]}
+                onChange={(value) => update_code(value)}
+                onMount={(editor) => {
+                  editorRef.current = editor;
+                }}
+              />
+            </Panel>
+
+            <PanelResizeHandle className="bg-gray-700 h-2 hover:bg-gray-600 cursor-row-resize" />
+
+            {/* Terminal pane */}
+            <Panel className="bg-black text-green-400 border-t border-gray-700 overflow-y-auto">
+              <div className="p-2 font-mono text-sm whitespace-pre-wrap break-words">
+                <div className="mb-2 text-gray-300">
+                  Time remaining: {formatTime(remainingMs)}
+                </div>
+                {terminalLines.length === 0 ? (
+                  <span className="text-gray-400">Terminal is empty.</span>
+                ) : (
+                  terminalLines.map((line, idx) => <div key={idx}>{line}</div>)
+                )}
+              </div>
+            </Panel>
+          </PanelGroup>
+        </Panel>
+
+        <PanelResizeHandle className="bg-gray-700 w-1 hover:bg-gray-600 cursor-col-resize" />
+
+        {/* Right Panel: Chat */}
+        <Panel minSize={0.1} maxSize={40} className="overflow-hidden">
+          <ChatPanel
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            currentUser={currentUser}
+          />
+        </Panel>
+      </PanelGroup>
+    </div>
+  );
 }
