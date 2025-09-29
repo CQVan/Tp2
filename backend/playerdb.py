@@ -36,7 +36,7 @@ def get_player(player_id: str) -> Player | None:
         uuid="",
         id=item['id'],
         elo=item['elo'],
-        password_hash=item['password_hash']
+        password_hash=item['password_hash'],
         metadata={}
     )
 
