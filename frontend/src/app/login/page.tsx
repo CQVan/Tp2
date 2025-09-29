@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-function LoginPage() {
+export default function LoginPage() {
   const [useLogin, setUseLogin] = useState(true);
 
   useEffect(() => {
@@ -39,8 +39,6 @@ function LoginPage() {
     </div>
   );
 }
-
-export default LoginPage;
 
 function LoginForm() {
   const [error, setError] = useState<string | null>(null);

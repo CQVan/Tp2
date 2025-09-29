@@ -11,8 +11,8 @@ function decodeJwtPayload(token: string) {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
     return JSON.parse(jsonPayload);
   } catch (error) {
@@ -48,6 +48,7 @@ export default function MatchmakingPage() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users?userid=${payload.sub}`);
         if (!res.ok) throw new Error("Failed to fetch user data.");
         const data = await res.json();
+        
         if (data.success) {
           setUser({ userid: data.userid, elo: data.elo });
         } else {
@@ -111,7 +112,7 @@ export default function MatchmakingPage() {
         // We do NOT redirect. We stay on this page to start the P2P handshake.
         setStatus(`✅ Match found against ${data.opponent.id}! Preparing the game...`);
         setIsQueueing(false); // We are no longer in the queue
-        
+
         // Store opponent details for the next step
         localStorage.setItem("opponent", JSON.stringify(data.opponent));
         localStorage.setItem("role", data.role); // 'offerer' or 'answerer'
@@ -128,7 +129,7 @@ export default function MatchmakingPage() {
       setStatus("Disconnected from queue.");
       setIsQueueing(false);
     };
-    
+
     ws.current.onerror = () => {
       setError("Could not connect to the matchmaking service.");
       setIsQueueing(false);
@@ -140,21 +141,21 @@ export default function MatchmakingPage() {
       ws.current.close(); // The onclose event will handle the state updates
     }
   }
-  
+
   // No changes needed for the JSX rendering part below this line,
   // but we'll add the cancel button.
 
   if (error) {
     return (
-        <div className="flex min-h-screen items-center justify-center">
-            <Card className="p-8 text-center">
-                <div className="text-xl font-bold mb-4 text-red-600">Error</div>
-                <p>{error}</p>
-                <a href="/login">
-                    <Button className="mt-4">Go to Login</Button>
-                </a>
-            </Card>
-        </div>
+      <div className="flex min-h-screen items-center justify-center">
+        <Card className="p-8 text-center">
+          <div className="text-xl font-bold mb-4 text-red-600">Error</div>
+          <p>{error}</p>
+          <a href="/login">
+            <Button className="mt-4">Go to Login</Button>
+          </a>
+        </Card>
+      </div>
     );
   }
 

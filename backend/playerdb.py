@@ -1,12 +1,14 @@
 import boto3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # Updated Player class
 @dataclass
 class Player:
     id: str
+    uuid: str
     elo: int
-    password_hash: str
+    password_hash: str = field(repr=False)
+    metadata: dict = field(default_factory=dict)
 
 from dotenv import load_dotenv
 import os
