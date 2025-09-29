@@ -26,7 +26,7 @@ export default function LoginPage() {
           <CardTitle>{useLogin ? "Login" : "Register"}</CardTitle>
         </CardHeader>
         <CardContent>
-          {useLogin ? <LoginForm /> : <RegisterForm />}
+          {useLogin ? <LoginForm /> : <RegisterForm onRegisterSuccess={() => setUseLogin(true)}/>}
           <Button
             variant="link"
             className="mt-4 w-full"
@@ -121,7 +121,7 @@ function LoginForm() {
   );
 }
 
-function RegisterForm() {
+function RegisterForm({} : {onRegisterSuccess: Function}) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 

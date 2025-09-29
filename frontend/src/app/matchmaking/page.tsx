@@ -26,7 +26,7 @@ export default function MatchmakingPage() {
   const [status, setStatus] = useState<string>("Click MATCHMAKE to enter the queue.");
   const [isQueueing, setIsQueueing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [matchFound, setMatchFound] = useState(false);
+  
   // CHANGE: Use useRef to hold the WebSocket instance
   // This prevents it from being re-created on every render
   const ws = useRef<WebSocket | null>(null);
