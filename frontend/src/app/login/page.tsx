@@ -20,7 +20,13 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 relative">
+      {/* Top-right Back button */}
+      <div className="absolute top-4 right-4">
+        <Button onClick={() => (window.location.href = "/")}>
+          Home
+        </Button>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{useLogin ? "Login" : "Register"}</CardTitle>
