@@ -5,7 +5,7 @@ import { Sword, Trophy, Zap, Users, Code, Target, ArrowRight, Menu, X, ChevronDo
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-const Navigation = ({ mobileMenuOpen, setMobileMenuOpen }) => (
+const Navigation = ( props : { mobileMenuOpen : boolean, setMobileMenuOpen : (value : boolean) => void }) => (
   <nav className="sticky top-0 z-50 px-6 py-4 bg-white border-b shadow-sm">
     <div className="max-w-7xl mx-auto flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -26,12 +26,12 @@ const Navigation = ({ mobileMenuOpen, setMobileMenuOpen }) => (
         variant="ghost"
         size="icon"
         className="md:hidden"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onClick={() => props.setMobileMenuOpen(!props.mobileMenuOpen)}
       >
-        {mobileMenuOpen ? <X /> : <Menu />}
+        {props.mobileMenuOpen ? <X /> : <Menu />}
       </Button>
     </div>
-    {mobileMenuOpen && (
+    {props.mobileMenuOpen && (
       <div className="md:hidden mt-4 pb-4 space-y-4 border-t pt-4">
         <a href="#features" className="block text-gray-700 hover:text-blue-600">Features</a>
         <a href="#how" className="block text-gray-700 hover:text-blue-600">How It Works</a>
@@ -42,7 +42,10 @@ const Navigation = ({ mobileMenuOpen, setMobileMenuOpen }) => (
   </nav>
 );
 
-const HeroSection = ({ showScrollArrow, scrollToFeatures }) => (
+const HeroSection = ( props  : { 
+  showScrollArrow : boolean, 
+  scrollToFeatures: (event : React.MouseEvent<HTMLDivElement, MouseEvent>) => void
+}) => (
   <section className="max-w-7xl mx-auto px-6 py-20">
     <div className="text-center space-y-8">
       <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full text-sm text-blue-700 font-medium">
@@ -64,8 +67,8 @@ const HeroSection = ({ showScrollArrow, scrollToFeatures }) => (
         </Button>
       </div>
       <div 
-        className={`pt-16 animate-bounce cursor-pointer transition-opacity duration-500 ${showScrollArrow ? 'opacity-100' : 'opacity-0'}`}
-        onClick={scrollToFeatures}
+        className={`pt-16 animate-bounce cursor-pointer transition-opacity duration-500 ${props.showScrollArrow ? 'opacity-100' : 'opacity-0'}`}
+        onClick={props.scrollToFeatures}
       >
         <ChevronDown className="w-12 h-12 mx-auto text-gray-400" />
       </div>
