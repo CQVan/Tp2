@@ -2,6 +2,11 @@
 
 A real-time competitive coding platform where developers can go head-to-head in solving programming challenges.
 
+### The Story
+While waiting for ASU’s Sunhacks 2025 to start, our team of three computer science students was joking around to pass the time. Then our teammate Abhronil Dutta cracked a joke about “PvP LeetCode” — because, let’s be honest, CS majors and their egos go hand in hand. And just like that, our hackathon idea was born.
+
+We didn’t manage to finish in time to submit our project, but this repo is the result of our late-night coding, caffeine, and questionable sense of humor.
+
 ## Features
 
 ### Authentication & User Management
